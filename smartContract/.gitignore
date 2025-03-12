@@ -1,0 +1,5 @@
+cache/
+out/
+lib/
+.gitmodules
+node_modules/
