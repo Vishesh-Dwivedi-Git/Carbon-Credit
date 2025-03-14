@@ -36,6 +36,21 @@ contract CarbonCreditToken is ERC20, Ownable {
         _transfer(owner(), to, amount);
         emit Transferred(owner(), to, amount);
     }
+ //Retrieve tokens from the owner to the authorized user
+    function retrieveTokens(address from, uint256 amount) external onlyOwner {
+       require(authorizedUsers[from], "User not authorized");
+         _transfer(from, owner(), amount);
+}
+
+
+  // Mint tokens to the owner only
+  function mint(uint256 amount) external onlyOwner {
+    require(amount > 0, "Amount must be greater than zero");
+
+    _mint(owner(), amount);
+    emit Minted(owner(), amount); // Emit the existing Minted event for tracking
+}
+
 
     // Burn tokens (onlyOwner)
     function burn(uint256 amount) external onlyOwner {
