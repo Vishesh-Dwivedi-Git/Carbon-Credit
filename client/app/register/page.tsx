@@ -51,7 +51,8 @@ export default function RegisterPage() {
 
     try {
       // This would be replaced with your actual API call
-      const response = await fetch("/api/register", {
+      console.log(formData)
+      const response = await fetch("http://localhost:3000/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -73,6 +74,7 @@ export default function RegisterPage() {
         throw new Error(data.message || "Registration failed")
       }
     } catch (error) {
+      console.error(error)
       toast({
         title: "Registration failed",
         description: error instanceof Error ? error.message : "Something went wrong",
@@ -165,7 +167,7 @@ export default function RegisterPage() {
             </CardContent>
 
             <CardFooter className="flex flex-col">
-              <Button type="submit" className="w-full" disabled={isLoading}>
+              <Button type="submit" className="w-full" disabled={isLoading} >
                 {isLoading ? "Registering..." : "Register"}
               </Button>
 
