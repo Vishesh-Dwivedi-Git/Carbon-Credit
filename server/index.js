@@ -28,6 +28,8 @@ app.use((err, req, res, next) => {
     });
 });
 
+
+
 app.listen(port, () => {
     connectDB();
     console.log(`Server is running at port ${port}`);

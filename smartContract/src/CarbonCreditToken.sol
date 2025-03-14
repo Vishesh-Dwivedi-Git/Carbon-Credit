@@ -5,7 +5,7 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 contract CarbonCreditToken is ERC20, Ownable {
-    mapping(address => bool) public authorizedUsers; // Track authorized users
+    mapping(address => bool) public authorizedUsers;
 
     constructor(address initialOwner) 
         ERC20("Carbon-Credit-Token", "CCT") 
