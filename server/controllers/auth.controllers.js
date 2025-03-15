@@ -2,7 +2,7 @@ import Org from '../models/org.models.js';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
-import { tokenContract } from "../config/blockchain.js"; // Import tokenContract
+import { tokenContract } from "../utils/blockchain.js"; // Import tokenContract
 dotenv.config();
 
 

@@ -1,6 +1,7 @@
 import CarbonTradeRequest from '../models/carbonTradeRequest.models.js';
 import Org from '../models/org.models.js';
 import dotenv from 'dotenv';
+import { tradingContract } from '../utils/blockchain.js';
 dotenv.config();
 
 export async function createTradeRequest(req, res, next) {

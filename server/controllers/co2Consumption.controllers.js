@@ -2,14 +2,8 @@ import CO2Consumption from '../models/co2Consumption.models.js';
 import Org from '../models/org.models.js';
 import dotenv from 'dotenv';
 dotenv.config();
+import { tokenContract } from "../utils/blockchain.js"; // Import token contract
 
-import { tokenContract } from "../blockchain/connect.js"; // Import token contract
-import Org from "../models/Org.js"; // Import Org model
-import CO2Consumption from "../models/CO2Consumption.js"; // Import CO2Consumption model
-
-import { tokenContract } from "../blockchain/connect.js"; // Import token contract
-import Org from "../models/Org.js"; // Import Org model
-import CO2Consumption from "../models/CO2Consumption.js"; // Import CO2Consumption model
 
 export async function submitCO2Consumption(req, res, next) {
     try {

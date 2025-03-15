@@ -117,7 +117,6 @@ import {
                 <Button 
                     key={connector.uid} 
                     onClick={() => connect({ connector })}
-                    disabled={!connector.ready}
                 >
                     Connect with {connector.name}
                 </Button>

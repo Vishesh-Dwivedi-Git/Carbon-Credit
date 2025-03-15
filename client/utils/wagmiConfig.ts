@@ -1,6 +1,6 @@
 import { http, createConfig } from 'wagmi'
-import { base, mainnet, optimism, sepolia } from 'wagmi/chains'
-import { injected, metaMask, safe, walletConnect , coinbaseWallet} from 'wagmi/connectors'
+import { base, mainnet, sepolia } from 'wagmi/chains'
+import { injected, metaMask, safe} from 'wagmi/connectors'
 
 export const config = createConfig({
     chains: [mainnet, base, sepolia],
@@ -8,11 +8,8 @@ export const config = createConfig({
             injected(),
             metaMask(),
             safe(),
-            coinbaseWallet({
-                appName: 'CarbonChain Web3 App',
-            }),
             ],
-            transports: {
+    transports: {
             [mainnet.id]: http(),
             [base.id]: http(),
             [sepolia.id]: http(),
