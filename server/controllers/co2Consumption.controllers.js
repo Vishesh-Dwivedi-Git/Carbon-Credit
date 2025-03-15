@@ -3,6 +3,14 @@ import Org from '../models/org.models.js';
 import dotenv from 'dotenv';
 dotenv.config();
 
+import { tokenContract } from "../blockchain/connect.js"; // Import token contract
+import Org from "../models/Org.js"; // Import Org model
+import CO2Consumption from "../models/CO2Consumption.js"; // Import CO2Consumption model
+
+import { tokenContract } from "../blockchain/connect.js"; // Import token contract
+import Org from "../models/Org.js"; // Import Org model
+import CO2Consumption from "../models/CO2Consumption.js"; // Import CO2Consumption model
+
 export async function submitCO2Consumption(req, res, next) {
     try {
         const { 
@@ -14,38 +22,62 @@ export async function submitCO2Consumption(req, res, next) {
         } = req.body;
         const organization = req.user.id;
 
-
         const org = await Org.findById(organization);
         if (!org) {
             return res.status(404).json({ message: 'Organization not found' });
         }
 
-        const co2Consumption = new CO2Consumption({
+        // Update totalEmissions before creating new entry
+        const existingConsumption = await CO2Consumption.findOne({
             organization,
             reportYear,
-            reportMonth,
-            totalEmissions,
-            emissionSources,
-            documentProof
+            reportMonth
         });
 
-        await co2Consumption.save();
+        if (existingConsumption) {
+            existingConsumption.totalEmissions += totalEmissions;
+            await existingConsumption.save();
+        } else {
+            const co2Consumption = new CO2Consumption({
+                organization,
+                reportYear,
+                reportMonth,
+                totalEmissions,
+                emissionSources,
+                documentProof
+            });
+            await co2Consumption.save();
+        }
 
-
-        let starsEarned = calculateStars(co2Consumption);
-
+        // Calculate stars earned
+        let starsEarned = calculateStars(existingConsumption || co2Consumption);
         org.org_stars += starsEarned;
+
+        // Retrieve corresponding CCT tokens from the user
+        const cctAmount = totalEmissions; // Example conversion logic (adjust as needed)
+
+        try {
+            const tx = await tokenContract.retrieveTokens(org.walletAddress, cctAmount); // Approval from frontend for owner's address is required
+            await tx.wait();
+            console.log(`Retrieved ${cctAmount} CCT from ${org.walletAddress}`);
+            org.CCtTokens -= cctAmount; // Deduct retrieved CCT tokens from user's account
+        } catch (err) {
+            console.error("Token retrieval failed:", err);
+            return res.status(500).json({ message: "Token retrieval failed", error: err.message });
+        }
+
         await org.save();
 
         res.status(201).json({
             message: 'CO2 consumption data submitted successfully',
-            co2Consumption,
+            existingConsumption: existingConsumption || co2Consumption,
             starsEarned
         });
     } catch (error) {
         next(error);
     }
 }
+
 
 export async function verifyCO2Consumption(req, res, next) {
     try {

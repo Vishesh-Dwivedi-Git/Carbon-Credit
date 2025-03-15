@@ -23,7 +23,7 @@ const CarbonTradeRequestSchema = new mongoose.Schema({
     },
     status: {
         type: String,
-        enum: ['PENDING', 'MATCHED', 'COMPLETED', 'CANCELLED'],
+        enum: ['PENDING', 'COMPLETED', 'CANCELLED'],
         default: 'PENDING'
     },
     matchedWith: {
