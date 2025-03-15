@@ -1,6 +1,5 @@
 import mongoose from 'mongoose';
 
-
 const OrgSchema = new mongoose.Schema({
     email: {
         type: String,
@@ -30,9 +29,17 @@ const OrgSchema = new mongoose.Schema({
     },
     refreshToken: {
         type: String,
+    },
+    walletAddress: {
+        type: String,
+        required: true,
+        unique: true
+    },
+    CCtTokens: {
+        type: Number,
+        default: 0
     }
 }, {timestamps: true});
-
 
 const Org = mongoose.model('Org', OrgSchema);
 

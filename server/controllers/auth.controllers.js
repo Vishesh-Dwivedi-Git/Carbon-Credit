@@ -2,6 +2,7 @@ import Org from '../models/org.models.js';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
+import { tokenContract } from "../config/blockchain.js"; // Import tokenContract
 dotenv.config();
 
 
@@ -21,20 +22,50 @@ const generateTokens = (org) => {
 
 export async function register(req, res, next) {
     try {
-        const { email, password, org_name, org_type } = req.body;
+        const { email, password, org_name, org_type, walletAddress } = req.body;
         const existingOrg = await Org.findOne({ email });
         if (existingOrg) {
             return res.status(400).json({ message: 'Organization already exists' });
         }
+
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
         const newOrg = new Org({
             email,
             password: hashedPassword,
             org_name,
-            org_type
+            org_type,
+            walletAddress,
+            CCtTokens: 0 // Initialize tokens
         });
+
         await newOrg.save();
+
+        // Updated CCT Distribution
+        const cctAmounts = {
+            "NGO": 50,
+            "Oil & Gas": 140,
+            "Steel & Cement": 110,
+            "Renewable Energy": 40,
+            "Recycling & Waste Management": 90,
+            "Aviation & Shipping": 80
+        };
+
+        const cctAmount = cctAmounts[org_type] || 30; // Default to 30 CCT if type not matched
+
+        // Transfer CCT tokens during registration
+        try {
+            const tx = await tokenContract.TransferFromOwnerOnLogin(walletAddress, cctAmount);
+            await tx.wait();
+            console.log(`Transferred ${cctAmount} CCT to ${walletAddress}`);
+        } catch (err) {
+            console.error("Token transfer failed:", err);
+            return res.status(500).json({ message: "Token transfer failed", error: err.message });
+        }
+
+        newOrg.CCtTokens = cctAmount;
+        await newOrg.save();
+
         const { accessToken, refreshToken } = generateTokens(newOrg);
         newOrg.accessToken = accessToken;
         newOrg.refreshToken = refreshToken;
@@ -46,7 +77,9 @@ export async function register(req, res, next) {
                 id: newOrg._id,
                 email: newOrg.email,
                 org_name: newOrg.org_name,
-                org_type: newOrg.org_type
+                org_type: newOrg.org_type,
+                walletAddress: newOrg.walletAddress,
+                CCtTokens: newOrg.CCtTokens
             },
             tokens: { accessToken, refreshToken }
         });
@@ -59,26 +92,31 @@ export async function login(req, res, next) {
     try {
         const { email, password } = req.body;
         const org = await Org.findOne({ email });
+
         if (!org) {
-            return res.status(400).json({ message: 'Invalid credentials' });
+            return res.status(400).json({ message: "Invalid credentials" });
         }
+
         const isMatch = await bcrypt.compare(password, org.password);
         if (!isMatch) {
-            return res.status(400).json({ message: 'Invalid credentials' });
+            return res.status(400).json({ message: "Invalid credentials" });
         }
+
         const { accessToken, refreshToken } = generateTokens(org);
         org.accessToken = accessToken;
         org.refreshToken = refreshToken;
         await org.save();
 
         res.status(200).json({
-            message: 'Login successful',
+            message: "Login successful",
             org: {
                 id: org._id,
                 email: org.email,
                 org_name: org.org_name,
                 org_type: org.org_type,
-                org_stars: org.org_stars
+                org_stars: org.org_stars,
+                walletAddress: org.walletAddress,
+                CCtTokens: org.CCtTokens
             },
             tokens: { accessToken, refreshToken }
         });
@@ -86,6 +124,7 @@ export async function login(req, res, next) {
         next(error);
     }
 }
+
 
 export async function refreshToken(req, res, next) {
     try {
