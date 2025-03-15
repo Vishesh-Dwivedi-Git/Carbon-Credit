@@ -7,7 +7,7 @@ import abiTrading from "../ABI/abiTradingContract.json" assert { type: "json" };
 import abiToken from "../ABI/abiCCT.json" assert { type: "json" };
 
 dotenv.config();
- 
+
     const tokenABI = abiToken;
     const tradingABI = abiTrading;
     const provider = new ethers.JsonRpcProvider(process.env.RPC_URL);

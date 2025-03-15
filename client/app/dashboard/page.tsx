@@ -169,16 +169,6 @@ export default function DashboardPage() {
         </CardContent>
       </Card>
 
-
-      <Card>
-        <CardHeader>
-          <CardTitle>ETH Wallet</CardTitle>
-          <CardDescription>Manage your Ethereum wallet and transfers</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Wallet />
-        </CardContent>
-      </Card>
     </div>
   )
 }

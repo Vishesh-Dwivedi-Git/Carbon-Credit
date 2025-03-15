@@ -7,6 +7,11 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useToast } from "@/components/ui/use-toast"
 import {
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
+    } from "@/components/ui/popover"
+    import {
     useAccount,
     useConnect,
     useDisconnect,
@@ -20,6 +25,7 @@ import {
     const [recipient, setRecipient] = useState<string>("")
     const [amount, setAmount] = useState<string>("")
     const [isTransactionPending, setIsTransactionPending] = useState(false)
+    const [isConnectorOpen, setIsConnectorOpen] = useState(false)
 
     const { address, isConnected } = useAccount()
     const { connectors, connect } = useConnect()
@@ -29,8 +35,8 @@ import {
     })
     const { sendTransaction, data: transactionData } = useSendTransaction()
     const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({
-            hash: transactionData,
-        })
+        hash: transactionData,
+    })
 
     // Handle ETH transfer
     const handleTransfer = async () => {
@@ -69,6 +75,12 @@ import {
         setRecipient("")
         setAmount("")
         setIsTransactionPending(false)
+    }
+
+    // Handle connector selection
+    const handleConnectorSelect = (connector: ReturnType<typeof useConnect>['connectors'][number]) => {
+        connect({ connector })
+        setIsConnectorOpen(false)
     }
 
     return (
@@ -112,18 +124,27 @@ import {
         ) : (
             <div className="space-y-4">
             <p className="text-sm text-muted-foreground">Connect your wallet to continue</p>
-            <div className="flex flex-col gap-2">
-                {connectors.map((connector) => (
-                <Button 
-                    key={connector.uid} 
-                    onClick={() => connect({ connector })}
-                >
-                    Connect with {connector.name}
-                </Button>
-                ))}
-            </div>
+            <Popover open={isConnectorOpen} onOpenChange={setIsConnectorOpen}>
+                <PopoverTrigger asChild>
+                <Button>Connect Wallet</Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-2">
+                <div className="flex flex-col gap-2">
+                    {connectors.map((connector) => (
+                    <Button 
+                        key={connector.uid} 
+                        onClick={() => handleConnectorSelect(connector)}
+                        variant="outline"
+                        className="justify-start"
+                    >
+                        Connect with {connector.name}
+                    </Button>
+                    ))}
+                </div>
+                </PopoverContent>
+            </Popover>
             </div>
         )}
         </div>
     )
-}
+    }
