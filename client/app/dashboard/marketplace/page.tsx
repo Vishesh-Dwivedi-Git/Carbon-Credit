@@ -35,14 +35,14 @@ export default function MarketplacePage() {
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold">Carbon Marketplace</h1>
         <Button onClick={() => setShowFilters(!showFilters)}>
-          <Filter className="h-4 w-4 mr-2" />
+          <Filter className="w-4 h-4 mr-2" />
           Filters
         </Button>
       </div>
 
       <div className="flex items-center space-x-4">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Search className="absolute w-4 h-4 transform -translate-y-1/2 left-3 top-1/2 text-muted-foreground" />
           <Input
             placeholder="Search by organization name or type..."
             className="pl-10"
@@ -51,7 +51,7 @@ export default function MarketplacePage() {
           />
         </div>
         <Button variant="outline">
-          <ArrowDownUp className="h-4 w-4 mr-2" />
+          <ArrowDownUp className="w-4 h-4 mr-2" />
           Sort
         </Button>
       </div>
@@ -102,44 +102,11 @@ export default function MarketplacePage() {
 
       <Tabs defaultValue="buy" onValueChange={setActiveTab}>
         <TabsList className="mb-4">
-          <TabsTrigger value="buy">Buy Tokens</TabsTrigger>
-          <TabsTrigger value="sell">Sell Tokens</TabsTrigger>
+          <TabsTrigger value="buy">Token Marketplace</TabsTrigger>
           <TabsTrigger value="create">Create Request</TabsTrigger>
         </TabsList>
 
         <TabsContent value="buy">
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            <TradeRequestCard
-              id="TR-1234"
-              orgName="EcoEnergy Solutions"
-              orgType="Renewable Energy"
-              tokenAmount={500}
-              pricePerToken={42.5}
-              requestType="SELL"
-              onMatch={() => handleMatchTrade("TR-1234")}
-            />
-            <TradeRequestCard
-              id="TR-5678"
-              orgName="GreenTech Industries"
-              orgType="Recycling & Waste Management"
-              tokenAmount={350}
-              pricePerToken={40.75}
-              requestType="SELL"
-              onMatch={() => handleMatchTrade("TR-5678")}
-            />
-            <TradeRequestCard
-              id="TR-9012"
-              orgName="SustainableFuture Corp"
-              orgType="NGO"
-              tokenAmount={200}
-              pricePerToken={38.9}
-              requestType="SELL"
-              onMatch={() => handleMatchTrade("TR-9012")}
-            />
-          </div>
-        </TabsContent>
-
-        <TabsContent value="sell">
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             <TradeRequestCard
               id="TR-3456"
@@ -167,6 +134,33 @@ export default function MarketplacePage() {
               pricePerToken={46.75}
               requestType="BUY"
               onMatch={() => handleMatchTrade("TR-1357")}
+            />
+            <TradeRequestCard
+              id="TR-1234"
+              orgName="EcoEnergy Solutions"
+              orgType="Renewable Energy"
+              tokenAmount={500}
+              pricePerToken={42.5}
+              requestType="SELL"
+              onMatch={() => handleMatchTrade("TR-1234")}
+            />
+            <TradeRequestCard
+              id="TR-5678"
+              orgName="GreenTech Industries"
+              orgType="Recycling & Waste Management"
+              tokenAmount={350}
+              pricePerToken={40.75}
+              requestType="SELL"
+              onMatch={() => handleMatchTrade("TR-5678")}
+            />
+            <TradeRequestCard
+              id="TR-9012"
+              orgName="SustainableFuture Corp"
+              orgType="NGO"
+              tokenAmount={200}
+              pricePerToken={38.9}
+              requestType="SELL"
+              onMatch={() => handleMatchTrade("TR-9012")}
             />
           </div>
         </TabsContent>
@@ -232,7 +226,7 @@ function TradeRequestCard({
   onMatch: () => void
 }) {
   return (
-    <Card className="carbon-card overflow-hidden">
+    <Card className="overflow-hidden carbon-card">
       <div className={`h-2 ${requestType === "BUY" ? "bg-blue-500" : "bg-green-500"}`}></div>
       <CardHeader>
         <div className="flex items-center justify-between">
