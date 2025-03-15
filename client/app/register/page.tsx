@@ -38,6 +38,16 @@ export default function RegisterPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
+    // Form validation
+    if (!formData.email || !formData.password || !formData.confirmPassword || !formData.org_name || !formData.org_type) {
+      toast({
+        title: "Missing fields",
+        description: "Please fill in all required fields.",
+        variant: "destructive",
+      })
+      return
+    }
+
     if (formData.password !== formData.confirmPassword) {
       toast({
         title: "Passwords don't match",
@@ -47,14 +57,24 @@ export default function RegisterPage() {
       return
     }
 
+    if (formData.password.length < 8) {
+      toast({
+        title: "Password too short",
+        description: "Password must be at least 8 characters long.",
+        variant: "destructive",
+      })
+      return
+    }
+
     setIsLoading(true)
 
     try {
-      // This would be replaced with your actual API call
-      console.log(formData)
-      const response = await fetch("http://localhost:3000/api/auth/register", {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/auth/register"
+      
+      const response = await fetch(apiUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({
           email: formData.email,
           password: formData.password,
@@ -63,6 +83,8 @@ export default function RegisterPage() {
         }),
       })
 
+      const data = await response.json()
+      
       if (response.ok) {
         toast({
           title: "Registration successful!",
@@ -70,14 +92,13 @@ export default function RegisterPage() {
         })
         router.push("/dashboard")
       } else {
-        const data = await response.json()
         throw new Error(data.message || "Registration failed")
       }
     } catch (error) {
-      console.error(error)
+      console.error("Registration error:", error)
       toast({
         title: "Registration failed",
-        description: error instanceof Error ? error.message : "Something went wrong",
+        description: error instanceof Error ? error.message : "Unable to connect to server",
         variant: "destructive",
       })
     } finally {
@@ -106,13 +127,18 @@ export default function RegisterPage() {
                   value={formData.org_name}
                   onChange={handleChange}
                   required
+                  aria-required="true"
                 />
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="org_type">Organization Type</Label>
-                <Select onValueChange={handleSelectChange} required>
-                  <SelectTrigger>
+                <Select 
+                  onValueChange={handleSelectChange} 
+                  value={formData.org_type}
+                  required
+                >
+                  <SelectTrigger id="org_type">
                     <SelectValue placeholder="Select organization type" />
                   </SelectTrigger>
                   <SelectContent>
@@ -136,6 +162,7 @@ export default function RegisterPage() {
                   value={formData.email}
                   onChange={handleChange}
                   required
+                  aria-required="true"
                 />
               </div>
 
@@ -149,6 +176,8 @@ export default function RegisterPage() {
                   value={formData.password}
                   onChange={handleChange}
                   required
+                  aria-required="true"
+                  minLength={8}
                 />
               </div>
 
@@ -162,12 +191,17 @@ export default function RegisterPage() {
                   value={formData.confirmPassword}
                   onChange={handleChange}
                   required
+                  aria-required="true"
                 />
               </div>
             </CardContent>
 
             <CardFooter className="flex flex-col">
-              <Button type="submit" className="w-full" disabled={isLoading} >
+              <Button 
+                type="submit" 
+                className="w-full" 
+                disabled={isLoading}
+              >
                 {isLoading ? "Registering..." : "Register"}
               </Button>
 
@@ -186,4 +220,3 @@ export default function RegisterPage() {
     </div>
   )
 }
-

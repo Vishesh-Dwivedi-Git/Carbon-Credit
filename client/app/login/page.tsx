@@ -29,19 +29,35 @@ export default function LoginPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    
+    // Form validation
+    if (!formData.email || !formData.password) {
+      toast({
+        title: "Missing fields",
+        description: "Please fill in all required fields.",
+        variant: "destructive",
+      })
+      return
+    }
+    
     setIsLoading(true)
 
     try {
-      // This would be replaced with your actual API call
-      const response = await fetch("http://localhost:3000/api/auth/login", {
+      // Update API endpoint to use relative URL or environment variable
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "/api/auth/login"
+      
+      const response = await fetch(apiUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include", // Include cookies for session management
         body: JSON.stringify({
           email: formData.email,
           password: formData.password,
         }),
       })
 
+      const data = await response.json()
+      
       if (response.ok) {
         toast({
           title: "Login successful!",
@@ -49,13 +65,13 @@ export default function LoginPage() {
         })
         router.push("/dashboard")
       } else {
-        const data = await response.json()
-        throw new Error(data.message || "Login failed")
+        throw new Error(data.message || "Invalid email or password")
       }
     } catch (error) {
+      console.error("Login error:", error)
       toast({
         title: "Login failed",
-        description: error instanceof Error ? error.message : "Invalid credentials",
+        description: error instanceof Error ? error.message : "Unable to connect to server",
         variant: "destructive",
       })
     } finally {
@@ -85,6 +101,7 @@ export default function LoginPage() {
                   value={formData.email}
                   onChange={handleChange}
                   required
+                  aria-required="true"
                 />
               </div>
 
@@ -103,12 +120,17 @@ export default function LoginPage() {
                   value={formData.password}
                   onChange={handleChange}
                   required
+                  aria-required="true"
                 />
               </div>
             </CardContent>
 
             <CardFooter className="flex flex-col">
-              <Button type="submit" className="w-full" disabled={isLoading}>
+              <Button 
+                type="submit" 
+                className="w-full" 
+                disabled={isLoading}
+              >
                 {isLoading ? "Logging in..." : "Login"}
               </Button>
 
@@ -127,4 +149,3 @@ export default function LoginPage() {
     </div>
   )
 }
-

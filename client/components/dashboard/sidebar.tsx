@@ -21,55 +21,62 @@ export default function Sidebar() {
       )}
     >
       <div className="p-4">
-        <Button variant="outline" size="sm" className="w-full justify-start" onClick={() => setCollapsed(!collapsed)}>
-          <RefreshCw className="h-4 w-4 mr-2" />
+        <Button variant="outline" size="sm" className="justify-start w-full" onClick={() => setCollapsed(!collapsed)}>
+          <RefreshCw className="w-4 h-4 mr-2" />
           {!collapsed && <span>Toggle Sidebar</span>}
         </Button>
       </div>
 
-      <nav className="space-y-1 px-2">
+      <nav className="px-2 space-y-1">
         <NavItem
           href="/dashboard"
-          icon={<Home className="h-5 w-5" />}
+          icon={<Home className="w-5 h-5" />}
           label="Dashboard"
           active={pathname === "/dashboard"}
           collapsed={collapsed}
         />
         <NavItem
           href="/dashboard/marketplace"
-          icon={<ShoppingCart className="h-5 w-5" />}
+          icon={<ShoppingCart className="w-5 h-5" />}
           label="Marketplace"
           active={pathname === "/dashboard/marketplace"}
           collapsed={collapsed}
         />
         <NavItem
           href="/dashboard/co2-reports"
-          icon={<FileText className="h-5 w-5" />}
+          icon={<FileText className="w-5 h-5" />}
           label="CO2 Reports"
           active={pathname === "/dashboard/co2-reports"}
           collapsed={collapsed}
         />
         <NavItem
           href="/dashboard/trade-requests"
-          icon={<BarChart3 className="h-5 w-5" />}
+          icon={<BarChart3 className="w-5 h-5" />}
           label="Trade Requests"
           active={pathname === "/dashboard/trade-requests"}
           collapsed={collapsed}
         />
         <NavItem
           href="/dashboard/analytics"
-          icon={<LineChart className="h-5 w-5" />}
+          icon={<LineChart className="w-5 h-5" />}
           label="Analytics"
           active={pathname === "/dashboard/analytics"}
           collapsed={collapsed}
         />
         <NavItem
           href="/dashboard/settings"
-          icon={<Settings className="h-5 w-5" />}
+          icon={<Settings className="w-5 h-5" />}
           label="Settings"
           active={pathname === "/dashboard/settings"}
           collapsed={collapsed}
         />
+        {/* <NavItem
+          href="/dashboard/wallet"
+          icon={<Settings className="w-5 h-5" />}
+          label="Connect your wallet"
+          active={pathname === "/dashboard/wallet"}
+          collapsed={collapsed}
+        /> */}
       </nav>
     </div>
   )
