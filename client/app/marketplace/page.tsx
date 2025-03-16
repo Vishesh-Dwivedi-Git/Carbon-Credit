@@ -1,40 +1,66 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { useToast } from "@/components/ui/use-toast"
-import { ArrowDownUp, Filter, Search } from "lucide-react"
-import Navbar from "@/components/navbar"
-import Footer from "@/components/footer"
+import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useToast } from "@/components/ui/use-toast";
+import { ArrowDownUp, Filter, Search } from "lucide-react";
+import {
+  useTradeRequestStore,
+  useCreateOrder,
+  useExecuteTradeStore,
+} from "../../Store";
+import SellTokenForm from "@/components/SellTokenForm";
 
 export default function MarketplacePage() {
-  const { toast } = useToast()
-  const [activeTab, setActiveTab] = useState("buy")
-  const [searchQuery, setSearchQuery] = useState("")
-  const [showFilters, setShowFilters] = useState(false)
+  const { toast } = useToast();
+  const { tradeRequests, fetchTradeRequests } = useTradeRequestStore();
+  const [activeTab, setActiveTab] = useState("buy");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [showFilters, setShowFilters] = useState(false);
 
-  const handleCreateTradeRequest = () => {
-    toast({
-      title: "Trade request created",
-      description: "Your trade request has been submitted successfully.",
-    })
-  }
+  useEffect(() => {
+    fetchTradeRequests();
+  }, [fetchTradeRequests]);
 
-  const handleMatchTrade = (id: string) => {
-    toast({
-      title: "Trade matched",
-      description: `You have successfully matched trade request #${id}.`,
-    })
-  }
+  const { executeTrade } = useExecuteTradeStore();
+
+  const handleMatchTrade = async (trade) => {
+    try {
+      await executeTrade({
+        sellerId: trade.sellerId,
+        sellerAddress: trade.sellerWalletAddress,
+        pricePerToken: trade.pricePerToken,
+        carbonTokenAmount: trade.tokenAmount,
+      });
+
+      toast({
+        title: "Trade matched",
+        description: `Successfully matched trade request #${trade.id}.`,
+      });
+
+      fetchTradeRequests(); // Refresh trade list after execution
+    } catch (error) {
+      console.error("Trade match failed:", error);
+      toast({
+        title: "Trade match failed",
+        description: error.message || "An error occurred.",
+      });
+    }
+  };
 
   return (
     <div className="min-h-screen flex flex-col">
-
       <main className="flex-1 container mx-auto px-4 py-8">
         <div className="space-y-6">
           <div className="flex items-center justify-between">
@@ -61,165 +87,34 @@ export default function MarketplacePage() {
             </Button>
           </div>
 
-          {showFilters && (
-            <Card>
-              <CardContent className="pt-6">
-                <div className="grid gap-6 md:grid-cols-3">
-                  <div className="space-y-2">
-                    <Label>Price Range</Label>
-                    <div className="flex items-center space-x-2">
-                      <Input type="number" placeholder="Min" />
-                      <span>to</span>
-                      <Input type="number" placeholder="Max" />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label>Organization Type</Label>
-                    <RadioGroup defaultValue="all">
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="all" id="all" />
-                        <Label htmlFor="all">All</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="renewable" id="renewable" />
-                        <Label htmlFor="renewable">Renewable Energy</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="oil-gas" id="oil-gas" />
-                        <Label htmlFor="oil-gas">Oil & Gas</Label>
-                      </div>
-                    </RadioGroup>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label>Token Amount</Label>
-                    <div className="flex items-center space-x-2">
-                      <Input type="number" placeholder="Min" />
-                      <span>to</span>
-                      <Input type="number" placeholder="Max" />
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
           <Tabs defaultValue="buy" onValueChange={setActiveTab}>
             <TabsList className="mb-4">
               <TabsTrigger value="buy">Buy Tokens</TabsTrigger>
               <TabsTrigger value="sell">Sell Tokens</TabsTrigger>
-              <TabsTrigger value="create">Create Request</TabsTrigger>
             </TabsList>
 
             <TabsContent value="buy">
               <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                <TradeRequestCard
-                  id="TR-1234"
-                  orgName="EcoEnergy Solutions"
-                  orgType="Renewable Energy"
-                  tokenAmount={500}
-                  pricePerToken={42.5}
-                  requestType="SELL"
-                  onMatch={() => handleMatchTrade("TR-1234")}
-                />
-                <TradeRequestCard
-                  id="TR-5678"
-                  orgName="GreenTech Industries"
-                  orgType="Recycling & Waste Management"
-                  tokenAmount={350}
-                  pricePerToken={40.75}
-                  requestType="SELL"
-                  onMatch={() => handleMatchTrade("TR-5678")}
-                />
-                <TradeRequestCard
-                  id="TR-9012"
-                  orgName="SustainableFuture Corp"
-                  orgType="NGO"
-                  tokenAmount={200}
-                  pricePerToken={38.9}
-                  requestType="SELL"
-                  onMatch={() => handleMatchTrade("TR-9012")}
-                />
+                {tradeRequests
+                  .filter((req) => req.requestType === "SELL")
+                  .map((trade) => (
+                    <TradeRequestCard
+                      key={trade.id}
+                      {...trade}
+                      onMatch={() => handleMatchTrade(trade.id)}
+                    />
+                  ))}
               </div>
             </TabsContent>
 
             <TabsContent value="sell">
-              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                <TradeRequestCard
-                  id="TR-3456"
-                  orgName="PetroChem Industries"
-                  orgType="Oil & Gas"
-                  tokenAmount={800}
-                  pricePerToken={45.2}
-                  requestType="BUY"
-                  onMatch={() => handleMatchTrade("TR-3456")}
-                />
-                <TradeRequestCard
-                  id="TR-7890"
-                  orgName="SteelWorks Manufacturing"
-                  orgType="Steel & Cement"
-                  tokenAmount={650}
-                  pricePerToken={44.3}
-                  requestType="BUY"
-                  onMatch={() => handleMatchTrade("TR-7890")}
-                />
-                <TradeRequestCard
-                  id="TR-1357"
-                  orgName="AirFleet Logistics"
-                  orgType="Aviation & Shipping"
-                  tokenAmount={450}
-                  pricePerToken={46.75}
-                  requestType="BUY"
-                  onMatch={() => handleMatchTrade("TR-1357")}
-                />
-              </div>
-            </TabsContent>
-
-            <TabsContent value="create">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Create Trade Request</CardTitle>
-                  <CardDescription>Create a new request to buy or sell carbon tokens</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div className="space-y-2">
-                      <Label>Request Type</Label>
-                      <RadioGroup defaultValue="buy">
-                        <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="buy" id="request-buy" />
-                          <Label htmlFor="request-buy">Buy Tokens</Label>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="sell" id="request-sell" />
-                          <Label htmlFor="request-sell">Sell Tokens</Label>
-                        </div>
-                      </RadioGroup>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="token-amount">Token Amount</Label>
-                      <Input id="token-amount" type="number" placeholder="Enter amount of tokens" />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="price-per-token">Price Per Token ($)</Label>
-                      <Input id="price-per-token" type="number" step="0.01" placeholder="Enter price per token" />
-                    </div>
-                  </div>
-                </CardContent>
-                <CardFooter>
-                  <Button onClick={handleCreateTradeRequest}>Create Trade Request</Button>
-                </CardFooter>
-              </Card>
+              <SellTokenForm />
             </TabsContent>
           </Tabs>
         </div>
       </main>
-
     </div>
-  )
+  );
 }
 
 function TradeRequestCard({
@@ -231,23 +126,29 @@ function TradeRequestCard({
   requestType,
   onMatch,
 }: {
-  id: string
-  orgName: string
-  orgType: string
-  tokenAmount: number
-  pricePerToken: number
-  requestType: "BUY" | "SELL"
-  onMatch: () => void
+  id: string;
+  orgName: string;
+  orgType: string;
+  tokenAmount: number;
+  pricePerToken: number;
+  requestType: "BUY" | "SELL";
+  onMatch: () => void;
 }) {
   return (
     <Card className="carbon-card overflow-hidden">
-      <div className={`h-2 ${requestType === "BUY" ? "bg-blue-500" : "bg-green-500"}`}></div>
+      <div
+        className={`h-2 ${
+          requestType === "BUY" ? "bg-blue-500" : "bg-green-500"
+        }`}
+      ></div>
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle>{orgName}</CardTitle>
           <span
             className={`text-xs px-2 py-1 rounded-full ${
-              requestType === "BUY" ? "bg-blue-500/20 text-blue-500" : "bg-green-500/20 text-green-500"
+              requestType === "BUY"
+                ? "bg-blue-500/20 text-blue-500"
+                : "bg-green-500/20 text-green-500"
             }`}
           >
             {requestType}
@@ -268,7 +169,10 @@ function TradeRequestCard({
           <div className="flex justify-between">
             <span className="text-muted-foreground">Total Value:</span>
             <span className="font-medium">
-              ${(tokenAmount * pricePerToken).toLocaleString(undefined, { maximumFractionDigits: 2 })}
+              $
+              {(tokenAmount * pricePerToken).toLocaleString(undefined, {
+                maximumFractionDigits: 2,
+              })}
             </span>
           </div>
         </div>
@@ -279,6 +183,5 @@ function TradeRequestCard({
         </Button>
       </CardFooter>
     </Card>
-  )
+  );
 }
-

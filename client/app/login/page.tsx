@@ -40,9 +40,8 @@ export default function LoginPage() {
     }
     
     setIsLoading(true)
-
+  
     try {
-      // Update API endpoint to use relative URL or environment variable
       const apiUrl = "http://localhost:5000/api/auth/login"
       
       const response = await fetch(apiUrl, {
@@ -54,10 +53,17 @@ export default function LoginPage() {
           password: formData.password,
         }),
       })
-
+  
       const data = await response.json()
       
       if (response.ok) {
+        // Ensure tokens exist in response
+        if (data.tokens && data.tokens.accessToken) {
+          localStorage.setItem("token", data.tokens.accessToken)
+        } else {
+          throw new Error("Token not received from server")
+        }
+  
         toast({
           title: "Login successful!",
           description: "Welcome back to CarbonChain.",
@@ -77,6 +83,8 @@ export default function LoginPage() {
       setIsLoading(false)
     }
   }
+  
+  
 
   return (
     <div className="min-h-screen flex flex-col">

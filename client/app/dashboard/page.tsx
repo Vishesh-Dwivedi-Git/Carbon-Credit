@@ -19,28 +19,46 @@ export default function DashboardPage() {
 
   const fetchDashboardData = async () => {
     try {
-      const tradeRes = await fetch("http://localhost:5000/api/carbon/trade-requests", { credentials: "include" })
-      const co2Res = await fetch("http://localhost:5000/api/carbon/co2-reports", { credentials: "include" })
-
-      if (tradeRes.ok && co2Res.ok) {
+      const token = localStorage.getItem("token") // Retrieve JWT token from localStorage
+      if (!token) {
+        console.error("No token found")
+        return
+      }
+  
+      const headers = {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`, // Attach token
+      }
+  
+      const [tradeRes, co2Res, userProfileRes] = await Promise.all([
+        fetch("http://localhost:5000/api/carbon/trade-requests", { method: "GET", headers, credentials: "include" }),
+        fetch("http://localhost:5000/api/carbon/co2-reports", { method: "GET", headers, credentials: "include" }),
+        fetch("http://localhost:5000/api/user/user-profile", { method: "GET", headers, credentials: "include" }), // Fetch user profile
+      ])
+  
+      if (tradeRes.ok && co2Res.ok && userProfileRes.ok) {
         const tradeData = await tradeRes.json()
         const co2Data = await co2Res.json()
-
+        const userProfile = await userProfileRes.json()
+  
         setTradeRequests(tradeData.tradeRequests)
         setCo2Reports(co2Data.co2Reports)
-
-        // Example calculations (adjust based on actual API response)
+  
         setDashboardData({
-          carbonTokens: tradeData.tradeRequests.length * 100, // Replace with actual logic
+          carbonTokens: userProfile.user?.CCtTokens || 0, // Use CCtTokens from user profile
           co2Emissions: co2Data.co2Reports.reduce((sum, report) => sum + report.emissions, 0),
-          tokenValue: 45.20, // Fetch if available
-          tradeVolume: tradeData.tradeRequests.length * 50 // Example
+          tokenValue: 1, // Fetch dynamically if available
+          tradeVolume: tradeData.tradeRequests.length * 50, // Example
         })
+      } else {
+        console.error("Failed to fetch data", tradeRes.status, co2Res.status, userProfileRes.status)
       }
     } catch (error) {
       console.error("Error fetching data:", error)
     }
   }
+  
+  
 
   useEffect(() => {
     fetchDashboardData()
@@ -64,7 +82,7 @@ export default function DashboardPage() {
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         <MetricCard title="Carbon Tokens" value={dashboardData.carbonTokens} description="Available tokens" icon={<Leaf className="w-5 h-5 text-primary" />} trend={{ value: "+12%", positive: true }} />
         <MetricCard title="CO2 Emissions" value={dashboardData.co2Emissions} description="Tons this month" icon={<BarChart3 className="w-5 h-5 text-destructive" />} trend={{ value: "-8%", positive: true }} />
-        <MetricCard title="Token Value" value={`$${dashboardData.tokenValue}`} description="Per token" icon={<DollarSign className="w-5 h-5 text-yellow-500" />} trend={{ value: "+5.2%", positive: true }} />
+        <MetricCard title="Token Value" value={`CCT ${dashboardData.tokenValue}`} description="One CO-2 tonne emmision" icon={<DollarSign className="w-5 h-5 text-yellow-500" />} trend={{ value: "+5.2%", positive: true }} />
         <MetricCard title="Trade Volume" value={dashboardData.tradeVolume} description="Tokens this month" icon={<ShoppingCart className="w-5 h-5 text-blue-500" />} trend={{ value: "-2.1%", positive: false }} />
       </div>
 

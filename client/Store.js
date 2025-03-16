@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import axios from 'axios';
 import { useSendTransaction } from 'wagmi';
-import { useContractWrite } from 'wagmi';
+import { useWriteContract } from 'wagmi';
 import { parseEther, parseUnits } from 'viem';
 
 // Axios Configuration
@@ -40,35 +40,38 @@ const useAuthorizeStore = create((set) => ({
 
 
 // ----------------- CREATE ORDER STORE -----------------
-const useCreateOrder = create((set) => ({
-    isLoading: false,
+const useCreateOrder = create((set) => {
+    // const { writeContractAsync } = useWriteContract(); 
+    return {
+        isLoading: false,
 
-    executeTrade: async ({ sellerId, requestType, carbonTokenAmount, pricePerToken }) => {
-        try {
-            set({ isLoading: true });
+        executeTrade: async ({ requestType, carbonTokenAmount, pricePerToken }) => {
+            try {
+                set({ isLoading: true });
 
-            if (requestType === 'SELL') {
-                const { writeAsync: approveAsync } = useContractWrite({
-                    address: CCT_TOKEN_ADDRESS,
-                    abi: ['function approve(address spender, uint256 amount) public returns (bool)'],
-                    functionName: 'approve'
-                });
+                if (requestType === 'SELL') {
+                    const approveTx = await writeContractAsync({
+                        address: CCT_TOKEN_ADDRESS,
+                        abi: ['function approve(address spender, uint256 amount) public returns (bool)'],
+                        functionName: 'approve',
+                        args: [TRADING_CONTRACT_ADDRESS, parseUnits(carbonTokenAmount.toString(), 18)]
+                    });
 
-                const approveTx = await approveAsync({
-                    args: [TRADING_CONTRACT_ADDRESS, parseUnits(carbonTokenAmount.toString(), 18)]
-                });
-                const approveReceipt = await approveTx.wait();
-                if (!approveReceipt || approveReceipt.status !== 1) throw new Error('Approval transaction failed.');
+                    const approveReceipt = await approveTx.wait();
+                    if (!approveReceipt || approveReceipt.status !== 1) {
+                        throw new Error('Approval transaction failed.');
+                    }
+                }
+
+                await axios.post('/trade-request', { requestType, carbonTokenAmount, pricePerToken });
+            } catch (error) {
+                console.error('Execution failed:', error);
+            } finally {
+                set({ isLoading: false });
             }
-
-            await axios.post('/trade-request', { sellerId, requestType, carbonTokenAmount, pricePerToken });
-        } catch (error) {
-            console.error('Execution failed:', error);
-        } finally {
-            set({ isLoading: false });
         }
-    }
-}));
+    };
+});
 
 // ----------------- TRANSFER ON REGISTER STORE -----------------
 const useTransferOnRegisterStore = create((set) => ({
@@ -87,7 +90,7 @@ const useTradeRequestStore = create((set) => ({
     tradeRequests: [],
     fetchTradeRequests: async () => {
         try {
-            const response = await axios.get('/trade-requests');
+            const response = await axios.get('http://localhost:5000/api/carbon/trade-requests');
             const indexedTradeRequests = response.data.map((request, index) => ({ ...request, index }));
             set({ tradeRequests: indexedTradeRequests });
         } catch (error) {
