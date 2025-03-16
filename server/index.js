@@ -18,9 +18,12 @@ app.use(express.urlencoded({ extended: true }));
 
 import authRoutes from './routes/auth.routes.js';
 import tradeRoutes from './routes/trade.routes.js';
+import incentivesRoutes from "./routes/incentives.routes.js"
+
 
 app.use('/api/auth', authRoutes);
 app.use('/api/carbon', tradeRoutes);
+app.use("/api/incentives", incentivesRoutes)
 
 app.use((err, req, res, next) => {
     console.error(err.stack);
