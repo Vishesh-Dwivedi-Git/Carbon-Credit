@@ -10,8 +10,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useToast } from "@/components/ui/use-toast"
-import Navbar from "@/components/navbar"
-import Footer from "@/components/footer"
+
 
 export default function LoginPage() {
   const router = useRouter()
@@ -44,7 +43,7 @@ export default function LoginPage() {
 
     try {
       // Update API endpoint to use relative URL or environment variable
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "/api/auth/login"
+      const apiUrl = "http://localhost:5000/api/auth/login"
       
       const response = await fetch(apiUrl, {
         method: "POST",

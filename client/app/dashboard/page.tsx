@@ -1,14 +1,12 @@
 "use client"
 
 import type React from "react"
-import dynamic from "next/dynamic";
 import { useState } from "react"
 import { ArrowDown, ArrowUp, BarChart3, DollarSign, Leaf, LineChart, RefreshCcw, ShoppingCart } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Progress } from "@/components/ui/progress"
-const Wallet = dynamic(() => import('@/components/Wallet'), { ssr: false });
 
 export default function DashboardPage() {
   const [isRefreshing, setIsRefreshing] = useState(false)
