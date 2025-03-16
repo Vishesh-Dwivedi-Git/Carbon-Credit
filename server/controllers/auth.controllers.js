@@ -148,15 +148,16 @@ export async function refreshToken(req, res, next) {
     }
 }
 
-export async function AuthorizeUser(req, res, next) {
+export async function AuthorizeUser(req, res) {
     try {
+        console.log("Authorizing user..."); 
         const { walletAddress } = req.body;
         
         if (!walletAddress) {
             return res.status(400).json({ error: "Wallet address is required" });
         }
 
-        const tx = await tokenContract.AuthorizeUser(walletAddress);
+        const tx = await tokenContract.authorizeUser(walletAddress);
         await tx.wait();
         console.log(`Authorized ${walletAddress}`);
 
