@@ -22,6 +22,7 @@
     "@radix-ui/react-tooltip": "^1.1.8",
     "@wagmi/connectors": "^5.7.9",
     "@wagmi/core": "^2.16.5",
+    "axios": "^1.8.3",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "ether.js": "^1.0.0",

@@ -19,6 +19,9 @@ import {
     useSendTransaction,
     useWaitForTransactionReceipt
     } from 'wagmi'
+import { stat } from "fs"
+
+import { useAuthorizeStore } from "../Store"
 
     export default function Wallet() {
     const { toast } = useToast()
@@ -83,6 +86,8 @@ import {
         setIsConnectorOpen(false)
     }
 
+    const authorizeYourself = useAuthorizeStore((state) => state.authorizeUser)
+
     return (
         <div className="space-y-6">
         <h1 className="text-3xl font-bold">Wallet</h1>
@@ -91,34 +96,9 @@ import {
             <div className="space-y-4">
             <p className="text-sm text-muted-foreground">Connected Account: {address}</p>
             <p className="text-lg font-semibold">Balance: {balanceData ? formatEther(balanceData?.value) : "0"} {balanceData?.symbol}</p>
-            <div className="space-y-4">
-                <div>
-                <Label htmlFor="recipient">Recipient Address</Label>
-                <Input
-                    id="recipient"
-                    value={recipient}
-                    onChange={(e) => setRecipient(e.target.value)}
-                    placeholder="0x..."
-                />
-                </div>
-                <div>
-                <Label htmlFor="amount">Amount (ETH)</Label>
-                <Input
-                    id="amount"
-                    value={amount}
-                    onChange={(e) => setAmount(e.target.value)}
-                    placeholder="0.0"
-                    type="number"
-                    step="0.001"
-                />
-                </div>
-                <Button 
-                onClick={handleTransfer} 
-                disabled={isTransactionPending || isConfirming}
-                >
-                {isTransactionPending || isConfirming ? "Sending..." : "Send ETH"}
-                </Button>
-                <Button onClick={() => disconnect()} variant="outline">Disconnect</Button>
+            <div className="flex gap-8">
+            <Button onClick={authorizeYourself} variant="outline">Authorise Yourself</Button>
+            <Button onClick={() => disconnect()} variant="outline">Disconnect</Button>
             </div>
             </div>
         ) : (
