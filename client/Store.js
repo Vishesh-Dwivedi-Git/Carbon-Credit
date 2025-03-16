@@ -24,7 +24,7 @@ const useAuthorizeStore = create((set) => ({
     userAddress: null,
     authorizeUser: async (walletAddress) => {
         try {
-            const response = await axios.post('http://localhost:5000/api/authorize', { walletAddress });
+            const response = await axios.post('http://localhost:5000/api/authorizeUser', { walletAddress });
             console.log('Authorization successful:', response.data);
             set({ userAddress: walletAddress });
         } catch (error) {

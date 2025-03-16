@@ -147,3 +147,18 @@ export async function refreshToken(req, res, next) {
         next(error);
     }
 }
+
+export async function AuthorizeUser(req, res, next) {
+    try {
+        const { walletAddress } = req.body;
+        //implement Smart contracvt function Call
+        const tx=await tokenContract.AuthorizeUser(walletAddress);
+        await tx.wait();
+        console.log(`Authorized ${walletAddress}`);
+        res.status(200).json({ message: 'Authorization successful'});
+
+       
+    } catch (error) {
+        next(error);
+    }
+}
