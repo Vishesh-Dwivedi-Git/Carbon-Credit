@@ -9,13 +9,13 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 
 export default function AnalyticsPage() {
   const [timeRange, setTimeRange] = useState("30d")
-  const [emissionsData, setEmissionsData] = useState([])
-  const [tradeData, setTradeData] = useState([])
-  const [tokenData, setTokenData] = useState([])
-  const [predictedPrices, setPredictedPrices] = useState([])
-  const [industryAdoption, setIndustryAdoption] = useState([])
-  const [sustainabilityScores, setSustainabilityScores] = useState([])
-  const [contractActivity, setContractActivity] = useState([])
+  const [emissionsData, setEmissionsData] = useState<{ date: string; ppm: number; baseline: number }[]>([])
+  const [tradeData, setTradeData] = useState<{ month: string; volume: number; transactions: number; avgPrice: number }[]>([])
+  const [tokenData, setTokenData] = useState<{ name: string; value: number }[]>([])
+  const [predictedPrices, setPredictedPrices] = useState<{ month: string; actual: number | null; predicted: number; lower: number; upper: number }[]>([])
+  const [industryAdoption, setIndustryAdoption] = useState<{ industry: string; conventional: number; sustainable: number; target: number }[]>([])
+  const [sustainabilityScores, setSustainabilityScores] = useState<{ category: string; score: number; average: number }[]>([])
+  const [contractActivity, setContractActivity] = useState<{ date: string; executed: number; value: number }[]>([])
   const [loading, setLoading] = useState(true)
 
   // Green color palette
