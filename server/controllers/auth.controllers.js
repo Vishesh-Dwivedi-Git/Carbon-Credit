@@ -58,7 +58,7 @@ export async function register(req, res, next) {
             if (!tokenContract) {
                 throw new Error("Token contract is not initialized");
             }
-            const tx = await tokenContract.TransferFromOwnerOnLogin(walletAddress, cctAmount);
+            const tx = await tokenContract.transferFromOwnerOnLogin(walletAddress, cctAmount);
             await tx.wait();
             console.log(`Transferred ${cctAmount} CCT to ${walletAddress}`);
         } catch (err) {
