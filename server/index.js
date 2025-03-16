@@ -8,7 +8,8 @@ const app = express();
 const port = process.env.PORT || 5000;
 
 app.use(cors({
-    origin: "*",
+    origin: "http://localhost:3000",
+    credentials: true,
 }));
 app.use(express.json({limit: '1mb'}));
 app.use(express.urlencoded({ extended: true }));

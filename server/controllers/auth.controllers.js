@@ -23,38 +23,41 @@ const generateTokens = (org) => {
 export async function register(req, res, next) {
     try {
         const { email, password, org_name, org_type, walletAddress } = req.body;
-        const existingOrg = await Org.findOne({ email });
-        if (existingOrg) {
-            return res.status(400).json({ message: 'Organization already exists' });
+
+        if (!walletAddress) {
+            return res.status(400).json({ message: "Wallet address is required" });
         }
 
+        const existingOrg = await Org.findOne({ email });
+        if (existingOrg) {
+            return res.status(400).json({ message: "Organization already exists" });
+        }
+
+        // Hash password
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
+
+        // Initialize CCT token allocation
+        const cctAmounts = {
+            "NGO": 50, "Oil & Gas": 140, "Steel & Cement": 110, 
+            "Renewable Energy": 40, "Recycling & Waste Management": 90, 
+            "Aviation & Shipping": 80
+        };
+        const cctAmount = cctAmounts[org_type] || 30; // Default 30 CCT if type not matched
+
+        // Create organization entry
         const newOrg = new Org({
-            email,
-            password: hashedPassword,
-            org_name,
-            org_type,
-            walletAddress,
-            CCtTokens: 0 // Initialize tokens
+            email, password: hashedPassword, org_name, 
+            org_type, walletAddress, CCtTokens: cctAmount
         });
 
         await newOrg.save();
 
-        // Updated CCT Distribution
-        const cctAmounts = {
-            "NGO": 50,
-            "Oil & Gas": 140,
-            "Steel & Cement": 110,
-            "Renewable Energy": 40,
-            "Recycling & Waste Management": 90,
-            "Aviation & Shipping": 80
-        };
-
-        const cctAmount = cctAmounts[org_type] || 30; // Default to 30 CCT if type not matched
-
         // Transfer CCT tokens during registration
         try {
+            if (!tokenContract) {
+                throw new Error("Token contract is not initialized");
+            }
             const tx = await tokenContract.TransferFromOwnerOnLogin(walletAddress, cctAmount);
             await tx.wait();
             console.log(`Transferred ${cctAmount} CCT to ${walletAddress}`);
@@ -63,30 +66,27 @@ export async function register(req, res, next) {
             return res.status(500).json({ message: "Token transfer failed", error: err.message });
         }
 
-        newOrg.CCtTokens = cctAmount;
-        await newOrg.save();
-
+        // Generate JWT tokens
         const { accessToken, refreshToken } = generateTokens(newOrg);
-        newOrg.accessToken = accessToken;
-        newOrg.refreshToken = refreshToken;
-        await newOrg.save();
 
+        // Send response
         res.status(201).json({
-            message: 'Organization registered successfully',
+            message: "Organization registered successfully",
             org: {
                 id: newOrg._id,
                 email: newOrg.email,
                 org_name: newOrg.org_name,
                 org_type: newOrg.org_type,
                 walletAddress: newOrg.walletAddress,
-                CCtTokens: newOrg.CCtTokens
+                CCtTokens: newOrg.CCtTokens,
             },
-            tokens: { accessToken, refreshToken }
+            tokens: { accessToken, refreshToken },
         });
     } catch (error) {
         next(error);
     }
 }
+
 
 export async function login(req, res, next) {
     try {
