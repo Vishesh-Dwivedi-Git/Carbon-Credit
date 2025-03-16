@@ -5,7 +5,7 @@ import type React from "react"
 import { useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { BarChart3, FileText, Home, LineChart, RefreshCw, Settings, ShoppingCart } from "lucide-react"
+import { BarChart3, FileText, Home, LineChart, RefreshCw, Settings, ShoppingCart, Trophy } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 
@@ -57,6 +57,13 @@ export default function Sidebar() {
           collapsed={collapsed}
         />
         <NavItem
+          href="/dashboard/incentives"
+          icon={<Trophy className="w-5 h-5" />}
+          label="Incentives"
+          active={pathname === "/dashboard/incentives"}
+          collapsed={collapsed}
+        />
+        <NavItem
           href="/dashboard/analytics"
           icon={<LineChart className="w-5 h-5" />}
           label="Analytics"
@@ -70,13 +77,6 @@ export default function Sidebar() {
           active={pathname === "/dashboard/settings"}
           collapsed={collapsed}
         />
-        {/* <NavItem
-          href="/dashboard/wallet"
-          icon={<Settings className="w-5 h-5" />}
-          label="Connect your wallet"
-          active={pathname === "/dashboard/wallet"}
-          collapsed={collapsed}
-        /> */}
       </nav>
     </div>
   )

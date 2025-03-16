@@ -40,6 +40,7 @@ export async function getAllIncentives(req, res, next) {
   }
 }
 
+
 // Update an incentive
 export async function updateIncentive(req, res, next) {
   try {

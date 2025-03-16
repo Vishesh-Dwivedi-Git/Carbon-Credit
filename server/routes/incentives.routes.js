@@ -22,6 +22,7 @@ router.delete("/delete/:id", authenticateToken, isGovernmentUser, deleteIncentiv
 // Public incentive endpoints
 router.get("/list", getAllIncentives)
 
+
 // User incentive endpoints
 router.post("/reward", authenticateToken, awardIncentivePoints)
 router.post("/redeem", authenticateToken, redeemIncentivePoints)

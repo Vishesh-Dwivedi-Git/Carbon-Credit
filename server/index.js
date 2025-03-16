@@ -24,6 +24,7 @@ app.use('/api/carbon', tradeRoutes);
 app.use("/api/incentives", incentivesRoutes)
 app.use("/api/user", userRoutes)
 
+
 app.use((err, req, res, next) => {
     console.error(err.stack);
     res.status(500).json({
