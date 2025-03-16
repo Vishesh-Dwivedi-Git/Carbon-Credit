@@ -84,7 +84,7 @@ export async function deleteIncentive(req, res, next) {
   }
 }
 
-// Award incentive points to a user
+// Award incentive points to a user ///vishesh integrate web3
 export async function awardIncentivePoints(req, res, next) {
   try {
     const { action, carbonOffset } = req.body
@@ -125,7 +125,7 @@ export async function awardIncentivePoints(req, res, next) {
       try {
         const tokenAmount = Math.floor(carbonOffset / 10) // Example: 1 token per 10 units offset
         if (tokenAmount > 0) {
-          const tx = await tokenContract.TransferFromOwnerOnLogin(org.walletAddress, tokenAmount)
+          const tx = await tokenContract.TransferFromOwnerOnLogin(org.walletAddress, tokenAmount) ///vishesh integrate web3
           await tx.wait()
           org.CCtTokens += tokenAmount
           await org.save()

@@ -17,7 +17,6 @@ router.post('/trade-request', authenticateToken, validateTradeRequest, createTra
 router.get('/trade-requests', authenticateToken, getTradeRequests);
 router.patch('/match-trade/:requestId', authenticateToken, matchTradeRequest);
 
-
 router.post('/submit-co2', authenticateToken, submitCO2Consumption);
 router.patch('/verify-co2/:id', authenticateToken, verifyCO2Consumption);
 router.get('/co2-reports', authenticateToken, getOrganizationCO2Reports);

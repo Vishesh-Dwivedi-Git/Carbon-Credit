@@ -10,7 +10,6 @@ import { ArrowRight, Award, Globe, Leaf, Shield } from "lucide-react"
 export default function AboutPage() {
   return (
     <div className="min-h-screen flex flex-col">
-      <Navbar />
 
       <main className="flex-1">
         {/* Hero Section */}
@@ -106,7 +105,6 @@ export default function AboutPage() {
         </section>
       </main>
 
-      <Footer />
     </div>
   )
 }

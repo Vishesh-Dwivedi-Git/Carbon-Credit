@@ -81,7 +81,6 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <Navbar />
 
       <div className="flex-1 flex items-center justify-center py-12 px-4 dashboard-gradient">
         <Card className="w-full max-w-md carbon-card">
@@ -145,7 +144,6 @@ export default function LoginPage() {
         </Card>
       </div>
 
-      <Footer />
     </div>
   )
 }
