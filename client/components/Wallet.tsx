@@ -88,6 +88,14 @@ import { useAuthorizeStore } from "../Store"
 
     const authorizeYourself = useAuthorizeStore((state) => state.authorizeUser)
 
+    const handleAuthorize = () => {
+        if (!address) {
+            console.error("Wallet not connected");
+            return;
+        }
+        authorizeYourself(address); // Pass only the wallet address
+    };
+
     return (
         <div className="space-y-6">
         <h1 className="text-3xl font-bold">Wallet</h1>
@@ -97,7 +105,7 @@ import { useAuthorizeStore } from "../Store"
             <p className="text-sm text-muted-foreground">Connected Account: {address}</p>
             <p className="text-lg font-semibold">Balance: {balanceData ? formatEther(balanceData?.value) : "0"} {balanceData?.symbol}</p>
             <div className="flex gap-8">
-            <Button onClick={authorizeYourself} variant="outline">Authorise Yourself</Button>
+            <Button onClick={handleAuthorize} variant="outline">Authorise Yourself</Button>
             <Button onClick={() => disconnect()} variant="outline">Disconnect</Button>
             </div>
             </div>

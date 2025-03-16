@@ -151,14 +151,19 @@ export async function refreshToken(req, res, next) {
 export async function AuthorizeUser(req, res, next) {
     try {
         const { walletAddress } = req.body;
-        //implement Smart contracvt function Call
-        const tx=await tokenContract.AuthorizeUser(walletAddress);
+        
+        if (!walletAddress) {
+            return res.status(400).json({ error: "Wallet address is required" });
+        }
+
+        const tx = await tokenContract.AuthorizeUser(walletAddress);
         await tx.wait();
         console.log(`Authorized ${walletAddress}`);
-        res.status(200).json({ message: 'Authorization successful'});
 
-       
+        res.status(200).json({ message: 'Authorization successful' });
+
     } catch (error) {
-        next(error);
+        console.error("Authorization error:", error);
+        res.status(500).json({ error: "Authorization failed" });
     }
 }

@@ -23,8 +23,13 @@ const OWNER_ADDRESS = process.env.NEXT_PUBLIC_OWNER;
 const useAuthorizeStore = create((set) => ({
     userAddress: null,
     authorizeUser: async (walletAddress) => {
+        if (!walletAddress) {
+            console.error("Invalid wallet address:", walletAddress);
+            return;
+        }
+
         try {
-            const response = await axios.post('http://localhost:5000/api/authorizeUser', { walletAddress });
+            const response = await axios.post('http://localhost:5000/api/auth/authorizeUser', { walletAddress });
             console.log('Authorization successful:', response.data);
             set({ userAddress: walletAddress });
         } catch (error) {
@@ -32,6 +37,7 @@ const useAuthorizeStore = create((set) => ({
         }
     }
 }));
+
 
 // ----------------- CREATE ORDER STORE -----------------
 const useCreateOrder = create((set) => ({
