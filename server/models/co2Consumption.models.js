@@ -8,11 +8,11 @@ const CO2ConsumptionSchema = new mongoose.Schema({
     },
     reportYear: {
         type: Number,
-        required: true
+       
     },
     reportMonth: {
         type: Number,
-        required: true,
+       
         min: 1,
         max: 12
     },
@@ -24,17 +24,17 @@ const CO2ConsumptionSchema = new mongoose.Schema({
     emissionSources: [{
         source: {
             type: String,
-            required: true
+            
         },
         emissions: {
             type: Number,
-            required: true,
+            
             min: 0
         }
     }],
     documentProof: {
         type: String, 
-        required: true
+       
     },
     verificationStatus: {
         type: String,
