@@ -29,24 +29,98 @@ export default function MarketplacePage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [showFilters, setShowFilters] = useState(false);
 
+  const [tradeRequests_b, setTradeRequests] = useState([]);
+  const [co2Reports, setCo2Reports] = useState([]);
+  const [dashboardData, setDashboardData] = useState({
+    carbonTokens: 0,
+    co2Emissions: 0,
+    tokenValue: 0,
+    tradeVolume: 0,
+  });
+
+  const fetchDashboardData = async () => {
+    try {
+      const token = localStorage.getItem("token"); // Retrieve JWT token from localStorage
+      if (!token) {
+        console.error("No token found");
+        return;
+      }
+
+      const headers = {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`, // Attach token
+      };
+
+      const [tradeRes, co2Res, userProfileRes] = await Promise.all([
+        fetch("http://localhost:5000/api/carbon/trade-requests", {
+          method: "GET",
+          headers,
+          credentials: "include",
+        }),
+        fetch("http://localhost:5000/api/carbon/co2-reports", {
+          method: "GET",
+          headers,
+          credentials: "include",
+        }),
+        fetch("http://localhost:5000/api/user/user-profile", {
+          method: "GET",
+          headers,
+          credentials: "include",
+        }), // Fetch user profile
+      ]);
+
+      if (tradeRes.ok && co2Res.ok && userProfileRes.ok) {
+        const tradeData = await tradeRes.json();
+        const co2Data = await co2Res.json();
+        const userProfile = await userProfileRes.json();
+
+        setTradeRequests(tradeData.tradeRequests);
+        setCo2Reports(co2Data.co2Reports);
+
+        setDashboardData({
+          carbonTokens: userProfile.user?.CCtTokens || 0, // Use CCtTokens from user profile
+          co2Emissions: co2Data.co2Reports.reduce(
+            (sum, report) => sum + report.emissions,
+            0
+          ),
+          tokenValue: 1, // Fetch dynamically if available
+          tradeVolume: tradeData.tradeRequests.length * 50, // Example
+        });
+      } else {
+        console.error(
+          "Failed to fetch data",
+          tradeRes.status,
+          co2Res.status,
+          userProfileRes.status
+        );
+      }
+    } catch (error) {
+      console.error("Error fetching data:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchDashboardData();
+  }, []);
+
   useEffect(() => {
     fetchTradeRequests();
   }, [fetchTradeRequests]);
 
   const { executeTrade } = useExecuteTradeStore();
 
-  const handleMatchTrade = async (trade) => {
+  const handleMatchTrade = async (tradeId) => {
     try {
       await executeTrade({
-        sellerId: trade.sellerId,
-        sellerAddress: trade.sellerWalletAddress,
-        pricePerToken: trade.pricePerToken,
-        carbonTokenAmount: trade.tokenAmount,
+        sellerId: tradeId, // Pass the trade ID
+        sellerAddress: "", // Update with actual seller address if needed
+        pricePerToken: 0, // Update with actual price if needed
+        carbonTokenAmount: 0, // Update with actual amount if needed
       });
 
       toast({
         title: "Trade matched",
-        description: `Successfully matched trade request #${trade.id}.`,
+        description: `Successfully matched trade request #${tradeId}.`,
       });
 
       fetchTradeRequests(); // Refresh trade list after execution
@@ -95,13 +169,18 @@ export default function MarketplacePage() {
 
             <TabsContent value="buy">
               <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                {tradeRequests
+                {tradeRequests_b
                   .filter((req) => req.requestType === "SELL")
                   .map((trade) => (
                     <TradeRequestCard
-                      key={trade.id}
-                      {...trade}
-                      onMatch={() => handleMatchTrade(trade.id)}
+                      key={trade._id}
+                      id={trade._id}
+                      orgName={trade.requester.org_name}
+                      orgType={trade.requester.org_type}
+                      tokenAmount={trade.carbonTokenAmount}
+                      pricePerToken={trade.pricePerToken}
+                      requestType={trade.requestType}
+                      onMatch={() => handleMatchTrade(trade._id)}
                     />
                   ))}
               </div>
@@ -133,7 +212,7 @@ function TradeRequestCard({
   pricePerToken: number;
   requestType: "BUY" | "SELL";
   onMatch: () => void;
-}) {
+}) { 
   return (
     <Card className="carbon-card overflow-hidden">
       <div
