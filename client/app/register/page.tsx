@@ -82,7 +82,7 @@ const handleSubmit = async (e: React.FormEvent) => {
 
         if (response.ok) {
             toast({ title: "Registration successful!", description: "Your organization has been registered." });
-            router.push("/dashboard");
+            router.push("/login");
         } else {
             throw new Error(data.message || "Registration failed");
         }

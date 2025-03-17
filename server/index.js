@@ -21,7 +21,7 @@ import userRoutes from "./routes/user.routes.js"
 import mintRoutes from "./routes/mint.routes.js";
 
 app.use('/api/auth', authRoutes);
-app.use('/api/carbon', tradeRoutes);
+app.use("/api/carbon", tradeRoutes);
 app.use("/api/incentives", incentivesRoutes)
 app.use("/api/user", userRoutes)
 

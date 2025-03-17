@@ -2,16 +2,21 @@ import CarbonTradeRequest from '../models/carbonTradeRequest.models.js';
 import Org from '../models/org.models.js';
 import dotenv from 'dotenv';
 import { tradingContract } from '../utils/blockchain.js';
+import { connect } from 'mongoose';
 dotenv.config();
 
 export async function createTradeRequest(req, res, next) {
+
     try {
+        console.log("inside createTradeRequest");
         const { requestType, carbonTokenAmount, pricePerToken } = req.body;    //for the sell trade Request Approve the contract address for the seller's wallet for the Amount
         const requester = req.user.id; 
+        console.log("requester", requester);
         const org = await Org.findById(requester);
         if (!org) {
             return res.status(404).json({ message: 'Organization not found' });
         }
+        console.log("org", org);
 
         const tradeRequest = new CarbonTradeRequest({
             requester,
@@ -21,34 +26,36 @@ export async function createTradeRequest(req, res, next) {
         });
 
         await tradeRequest.save();
-
-        res.status(201).json({
+        console.log("tradeRequest", tradeRequest);
+        return res.status(201).json({
             message: 'Trade request created successfully',
             tradeRequest
         });
     } catch (error) {
+        console.log("error in createTradeRequest", error);
         next(error);
     }
 }
 
 export async function getTradeRequests(req, res, next) {
     try {
-        const { requestType, status } = req.query;
-        const filter = {};
 
-        if (requestType) filter.requestType = requestType;
-        if (status) filter.status = status;
-        filter.requester = { $ne: req.user.id };
-
+        console.log("inside getTradeRequests");
+        const filter = {
+            status: 'PENDING',          // ✅ Include only trades with status "PENDING"
+            requester: { $ne: req.user.id }  // ✅ Exclude trades by the current user
+        };
+        console.log("filter", filter);
         const tradeRequests = await CarbonTradeRequest.find(filter)
             .populate('requester', 'org_name org_type')
             .sort({ createdAt: -1 });
-
-        res.status(200).json({
-            message: 'Trade requests retrieved successfully',
+        console.log("tradeRequests", tradeRequests);
+        return res.status(200).json({
+            message: 'Pending trade requests retrieved successfully',
             tradeRequests
         });
     } catch (error) {
+        console.log("error in getTradeRequests", error);
         next(error);
     }
 }
@@ -95,11 +102,12 @@ export async function matchTradeRequest(req, res, next) {
 
         // Execute trade via smart contract
         try {
+            const EthPrice = cctAmountSeller * pricePerTokenSeller;
             const tx = await tradingContract.executeTrade( //need to approve the contract address for the seller's wallet for the Amount
                 sellerWallet,
                 buyerWallet,
                 cctAmountSeller,
-                pricePerTokenSeller
+                EthPrice
             );
             await tx.wait();
 

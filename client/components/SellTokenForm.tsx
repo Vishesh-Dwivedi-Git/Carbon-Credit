@@ -4,8 +4,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/use-toast";
 import { useAccount, useWriteContract } from "wagmi";
-import { parseUnits } from "viem";
+import { Chain, Client, parseUnits, Transport } from "viem";
 import axios from "axios";
+
+
 
 const CCT_TOKEN_ADDRESS = process.env.NEXT_PUBLIC_CCT;
 const TRADING_CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_TRADING;
@@ -26,29 +28,35 @@ const CCT_TOKEN_ABI = [
 
 async function createOrder({ requestType, carbonTokenAmount, pricePerToken, writeContractAsync }) {
   try {
+
+    
     if (requestType === "SELL") {
-      // ✅ Correct ABI format
-      const approveTx = await writeContractAsync({
+      // Step 1: Initiate the approval transaction
+      await writeContractAsync({
         address: CCT_TOKEN_ADDRESS,
-        abi: CCT_TOKEN_ABI, // Use full ABI object
+        abi: CCT_TOKEN_ABI,
         functionName: "approve",
         args: [TRADING_CONTRACT_ADDRESS, parseUnits(carbonTokenAmount.toString(), 18)],
       });
-
-      const approveReceipt = await approveTx.wait();
-      if (!approveReceipt || approveReceipt.status !== 1) {
-        throw new Error("Approval transaction failed.");
-      }
+    
     }
-
-    await axios.post("http://localhost/api/carbon/trade-request", { requestType, carbonTokenAmount, pricePerToken });
-
-    return { success: true };
+    
+    // Step 3: Only proceed with the API call if approval was successful
+    console.log(requestType, carbonTokenAmount, pricePerToken);
+    const resp=await axios.post("http://localhost:5000/api/carbon/trade-request", { 
+      requestType, 
+      carbonTokenAmount, 
+      pricePerToken,
+    });
+    
+    console.log("Trade request created:", resp.data);
+    return resp.data;
   } catch (error) {
     console.error("Trade request failed:", error);
     throw error;
   }
 }
+// Helper function to wait for transaction with timeout and retry
 
 function SellTokenForm() {
   const { toast } = useToast();
@@ -58,6 +66,7 @@ function SellTokenForm() {
   const [tokenAmount, setTokenAmount] = useState("");
   const [pricePerToken, setPricePerToken] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const client=process.env.NEXT_PUBLIC_CLIENT;
 
   const handleSell = async () => {
     if (!tokenAmount || !pricePerToken) {
@@ -78,7 +87,8 @@ function SellTokenForm() {
         requestType: "SELL",
         carbonTokenAmount: parseFloat(tokenAmount),
         pricePerToken: parseFloat(pricePerToken),
-        writeContractAsync, // ✅ Passing the writeContractAsync function
+        writeContractAsync, // ✅ Passing the writeContractAsync function,
+        
       });
 
       toast({ title: "Success", description: "Trade request created successfully." });

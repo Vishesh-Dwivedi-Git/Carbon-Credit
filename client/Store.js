@@ -1,7 +1,6 @@
 import { create } from 'zustand';
 import axios from 'axios';
 import { useSendTransaction } from 'wagmi';
-import { useWriteContract } from 'wagmi';
 import { parseEther, parseUnits } from 'viem';
 
 // Axios Configuration
@@ -90,13 +89,17 @@ const useTradeRequestStore = create((set) => ({
     tradeRequests: [],
     fetchTradeRequests: async () => {
         try {
+            console.log("Fetching trade requests..."); // 🔍 Debugging Line
             const response = await axios.get('http://localhost:5000/api/carbon/trade-requests');
+            console.log("API Response:", response.data); // 🔍 Debugging Line
+    
             const indexedTradeRequests = response.data.map((request, index) => ({ ...request, index }));
             set({ tradeRequests: indexedTradeRequests });
         } catch (error) {
             console.error('Failed to fetch trade requests:', error);
         }
     }
+    
 }));
 
 // ----------------- EXECUTE TRADE STORE -----------------
