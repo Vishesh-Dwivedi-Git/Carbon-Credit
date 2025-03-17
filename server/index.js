@@ -18,11 +18,15 @@ import authRoutes from './routes/auth.routes.js';
 import tradeRoutes from './routes/trade.routes.js';
 import incentivesRoutes from "./routes/incentives.routes.js"
 import userRoutes from "./routes/user.routes.js"
+import mintRoutes from "./routes/mint.routes.js";
 
 app.use('/api/auth', authRoutes);
 app.use('/api/carbon', tradeRoutes);
 app.use("/api/incentives", incentivesRoutes)
 app.use("/api/user", userRoutes)
+
+app.use('/api', mintRoutes);  // Mount the mint routes
+
 
 
 app.use((err, req, res, next) => {
