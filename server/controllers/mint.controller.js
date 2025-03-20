@@ -1,18 +1,26 @@
-import { mintTokens } from '../services/mint.services.js';
+import { tokenContract } from "../utils/blockchain.js"; // Import token contract
 
-// Minting Controller
+// Controller function to mint tokens
 export const mintToken = async function (req, res) {
-    const { amount } = req.body;  // Extract amount from request body
+    const { amount } = req.body; // Extract amount from request body
 
     try {
-        // Call the service to mint tokens
-        const result = await mintTokens(amount);
+        // Call the mint function directly on the token contract
+        const result = await tokenContract.mint(amount);
+
+        // Wait for transaction confirmation
+        const receipt = await result.wait();
+
+        if (receipt.status !== 'success') {
+            throw new Error('Minting transaction failed');
+        }
 
         // Send success response
         return res.status(200).json({
             message: 'Tokens minted successfully',
-            transactionHash: result.transactionHash,
+            transactionHash: receipt.transactionHash,
         });
+
     } catch (error) {
         console.error('Minting error:', error);
         return res.status(500).json({

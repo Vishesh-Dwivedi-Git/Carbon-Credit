@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import axios from 'axios';
-import { useSendTransaction } from 'wagmi';
 import { parseEther, parseUnits } from 'viem';
+
 
 // Axios Configuration
 axios.defaults.baseURL = process.env.NEXT_PUBLIC_API_BASE_URL;
@@ -62,7 +62,8 @@ const useCreateOrder = create((set) => {
                     }
                 }
 
-                await axios.post('/trade-request', { requestType, carbonTokenAmount, pricePerToken });
+              const response=await axios.post('/trade-request', { requestType, carbonTokenAmount, pricePerToken });
+              console.log("Successfully created trade request:", response.data);
             } catch (error) {
                 console.error('Execution failed:', error);
             } finally {
@@ -103,31 +104,67 @@ const useTradeRequestStore = create((set) => ({
 }));
 
 // ----------------- EXECUTE TRADE STORE -----------------
+
+ // Import wagmi public client
+
 const useExecuteTradeStore = create((set) => ({
     isLoading: false,
 
-    executeTrade: async ({ sellerId, sellerAddress, pricePerToken, carbonTokenAmount }) => {
-        const totalEthToSend = (pricePerToken * carbonTokenAmount).toString();
+    executeTrade: async ({
+        sellerId,
+        sellerAddress,
+        pricePerToken,
+        carbonTokenAmount,
+        sendTransactionAsync,
+        publicClient
+    }) => {
+        console.log(pricePerToken, carbonTokenAmount, sellerAddress, sellerId); // Debugging
+
+        const totalEthToSend = (parseFloat(pricePerToken) * parseFloat(carbonTokenAmount)).toString();
+
+        if (isNaN(Number(totalEthToSend)) || Number(totalEthToSend) <= 0) {
+            throw new Error("Invalid transaction amount. Please check the values.");
+        }
 
         try {
             set({ isLoading: true });
-            const { sendTransactionAsync } = useSendTransaction();
-            const tx = await sendTransactionAsync({
+
+            // ✅ Get the public client inside the function 
+            if (!publicClient) throw new Error("publicClient is undefined");
+
+            // Send transaction and get the transaction hash
+            const txHash = await sendTransactionAsync({
                 to: sellerAddress,
-                value: parseEther(totalEthToSend)
+                value: parseEther(totalEthToSend),
             });
 
-            const receipt = await tx.wait();
-            if (!receipt || receipt.status !== 1) throw new Error('Transaction failed.');
+            console.log("Transaction sent! Hash:", txHash);
 
-            await axios.post(`/match-trade/${sellerId}`, { sellerId });
+            // Wait for transaction receipt
+            const receipt = await publicClient.waitForTransactionReceipt({ hash: txHash });
+
+            if (!receipt || receipt.status !== 'success') {
+                throw new Error('Transaction failed.');
+            }
+
+            console.log("Transaction confirmed!", receipt);
+
+            // Notify backend after successful transaction
+            console.log(sellerId);
+            const response=await axios.post("http://localhost:5000/api/carbon/match-trade", { sellerId });
+            console.log("Successfully matched trade request:", response.data);
+            
+
         } catch (error) {
             console.error('Execution failed:', error);
+            throw error;
         } finally {
             set({ isLoading: false });
         }
     }
 }));
+
+
 
 // ----------------- CO2 CONSUMPTION REPORT STORE -----------------
 const useCO2ReportStore = create((set) => ({

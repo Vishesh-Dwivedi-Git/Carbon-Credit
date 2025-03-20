@@ -26,37 +26,61 @@ const CCT_TOKEN_ABI = [
   },
 ];
 
+
+
 async function createOrder({ requestType, carbonTokenAmount, pricePerToken, writeContractAsync }) {
   try {
+    console.log("🔥 Starting createOrder function...");
+    console.log("📌 CCT_TOKEN_ADDRESS:", CCT_TOKEN_ADDRESS);
+    console.log("📌 TRADING_CONTRACT_ADDRESS:", TRADING_CONTRACT_ADDRESS);
 
-    
+    if (!CCT_TOKEN_ADDRESS || !TRADING_CONTRACT_ADDRESS) {
+      throw new Error("❌ Missing contract addresses. Check your environment variables.");
+    }
+
+    console.log("📝 Request Type:", requestType);
+    console.log("🔢 Carbon Token Amount:", carbonTokenAmount);
+    console.log("💲 Price Per Token:", pricePerToken);
+
+    const amountInWei = parseUnits(carbonTokenAmount.toString(), 18);
+    console.log("💰 Amount in Wei:", amountInWei.toString());
+
     if (requestType === "SELL") {
-      // Step 1: Initiate the approval transaction
-      await writeContractAsync({
+      console.log(`🛠 Approving ${carbonTokenAmount} CCT tokens for contract: ${TRADING_CONTRACT_ADDRESS}`);
+
+    await writeContractAsync({
         address: CCT_TOKEN_ADDRESS,
         abi: CCT_TOKEN_ABI,
         functionName: "approve",
-        args: [TRADING_CONTRACT_ADDRESS, parseUnits(carbonTokenAmount.toString(), 18)],
+        args: [TRADING_CONTRACT_ADDRESS, amountInWei],
       });
-    
+
+   
     }
-    
-    // Step 3: Only proceed with the API call if approval was successful
-    console.log(requestType, carbonTokenAmount, pricePerToken);
-    const resp=await axios.post("http://localhost:5000/api/carbon/trade-request", { 
-      requestType, 
-      carbonTokenAmount, 
+
+    console.log("📡 Sending trade request to backend...");
+    const resp = await axios.post("http://localhost:5000/api/carbon/trade-request", {
+      requestType,
+      carbonTokenAmount,
       pricePerToken,
     });
-    
-    console.log("Trade request created:", resp.data);
+
+    console.log("🎯 Trade request created successfully:", resp.data);
     return resp.data;
+
   } catch (error) {
-    console.error("Trade request failed:", error);
+    console.error("🚨 Trade request failed! Error details:", error);
+
+    if (error.response) {
+      console.error("🛑 Backend Response:", error.response.data);
+    } else if (error.request) {
+      console.error("🛑 No response received from backend!");
+    }
+
     throw error;
   }
 }
-// Helper function to wait for transaction with timeout and retry
+
 
 function SellTokenForm() {
   const { toast } = useToast();

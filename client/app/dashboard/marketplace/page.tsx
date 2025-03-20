@@ -1,5 +1,4 @@
 "use client";
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,88 +13,60 @@ import { Input } from "@/components/ui/input";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/components/ui/use-toast";
-import { ArrowDownUp, Filter, Search } from "lucide-react";
+import { Filter } from "lucide-react";
 import {
   useTradeRequestStore,
-  useCreateOrder,
   useExecuteTradeStore,
 } from "../../../Store";
 import SellTokenForm from "@/components/SellTokenForm";
+import { usePublicClient, useSendTransaction } from "wagmi";
 
 export default function MarketplacePage() {
+  const { sendTransactionAsync } = useSendTransaction();
+  const { executeTrade } = useExecuteTradeStore();
+  const publicClient = usePublicClient(); 
   const { toast } = useToast();
-  const { tradeRequests, fetchTradeRequests } = useTradeRequestStore();
-  const [activeTab, setActiveTab] = useState("buy");
-  const [searchQuery, setSearchQuery] = useState("");
-  const [showFilters, setShowFilters] = useState(false);
-
   const [tradeRequests_b, setTradeRequests] = useState([]);
-  const [co2Reports, setCo2Reports] = useState([]);
-  const [dashboardData, setDashboardData] = useState({
-    carbonTokens: 0,
-    co2Emissions: 0,
-    tokenValue: 0,
-    tradeVolume: 0,
-  });
 
   const fetchDashboardData = async () => {
     try {
-      const token = localStorage.getItem("token"); // Retrieve JWT token from localStorage
+      const token = localStorage.getItem("token");
       if (!token) {
-        console.error("No token found");
+        toast({
+          title: "Authentication Error",
+          description: "No token found. Please log in again.",
+          variant: "destructive",
+        });
         return;
       }
 
       const headers = {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`, // Attach token
+        Authorization: `Bearer ${token}`,
       };
 
-      const [tradeRes, co2Res, userProfileRes] = await Promise.all([
-        fetch("http://localhost:5000/api/carbon/trade-requests", {
-          method: "GET",
-          headers,
-          credentials: "include",
-        }),
-        fetch("http://localhost:5000/api/carbon/co2-reports", {
-          method: "GET",
-          headers,
-          credentials: "include",
-        }),
-        fetch("http://localhost:5000/api/user/user-profile", {
-          method: "GET",
-          headers,
-          credentials: "include",
-        }), // Fetch user profile
-      ]);
+      const tradeRes = await fetch("http://localhost:5000/api/carbon/trade-requests", {
+        method: "GET",
+        headers,
+        credentials: "include",
+      });
 
-      if (tradeRes.ok && co2Res.ok && userProfileRes.ok) {
+      if (tradeRes.ok) {
         const tradeData = await tradeRes.json();
-        const co2Data = await co2Res.json();
-        const userProfile = await userProfileRes.json();
-
         setTradeRequests(tradeData.tradeRequests);
-        setCo2Reports(co2Data.co2Reports);
-
-        setDashboardData({
-          carbonTokens: userProfile.user?.CCtTokens || 0, // Use CCtTokens from user profile
-          co2Emissions: co2Data.co2Reports.reduce(
-            (sum, report) => sum + report.emissions,
-            0
-          ),
-          tokenValue: 1, // Fetch dynamically if available
-          tradeVolume: tradeData.tradeRequests.length * 50, // Example
-        });
       } else {
-        console.error(
-          "Failed to fetch data",
-          tradeRes.status,
-          co2Res.status,
-          userProfileRes.status
-        );
+        toast({
+          title: "Data Fetch Failed",
+          description: "Failed to fetch trade requests from the server.",
+          variant: "destructive",
+        });
       }
     } catch (error) {
-      console.error("Error fetching data:", error);
+      toast({
+        title: "Unexpected Error",
+        description: "An error occurred while fetching data.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -103,32 +74,36 @@ export default function MarketplacePage() {
     fetchDashboardData();
   }, []);
 
-  useEffect(() => {
-    fetchTradeRequests();
-  }, [fetchTradeRequests]);
+  const handleMatchTrade = async (tradeId, sellerAddress, pricePerToken, carbonTokenAmount) => {
+    if (isNaN(pricePerToken) || isNaN(carbonTokenAmount)) {
+      toast({
+        title: "Invalid Input",
+        description: "Price per token or carbon token amount is invalid.",
+        variant: "destructive",
+      });
+      return;
+    }
 
-  const { executeTrade } = useExecuteTradeStore();
-
-  const handleMatchTrade = async (tradeId) => {
     try {
       await executeTrade({
-        sellerId: tradeId, // Pass the trade ID
-        sellerAddress: "", // Update with actual seller address if needed
-        pricePerToken: 0, // Update with actual price if needed
-        carbonTokenAmount: 0, // Update with actual amount if needed
+        sellerId: tradeId,
+        sellerAddress,
+        pricePerToken: parseFloat(pricePerToken),
+        carbonTokenAmount: parseFloat(carbonTokenAmount),
+        sendTransactionAsync,
+        publicClient
       });
 
       toast({
-        title: "Trade matched",
+        title: "Trade Matched",
         description: `Successfully matched trade request #${tradeId}.`,
       });
-
-      fetchTradeRequests(); // Refresh trade list after execution
+ fetchDashboardData();
     } catch (error) {
-      console.error("Trade match failed:", error);
       toast({
-        title: "Trade match failed",
+        title: "Trade Match Failed",
         description: error.message || "An error occurred.",
+        variant: "destructive",
       });
     }
   };
@@ -137,31 +112,7 @@ export default function MarketplacePage() {
     <div className="min-h-screen flex flex-col">
       <main className="flex-1 container mx-auto px-4 py-8">
         <div className="space-y-6">
-          <div className="flex items-center justify-between">
-            <h1 className="text-3xl font-bold">Carbon Marketplace</h1>
-            <Button onClick={() => setShowFilters(!showFilters)}>
-              <Filter className="h-4 w-4 mr-2" />
-              Filters
-            </Button>
-          </div>
-
-          <div className="flex items-center space-x-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search by organization name or type..."
-                className="pl-10"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
-            <Button variant="outline">
-              <ArrowDownUp className="h-4 w-4 mr-2" />
-              Sort
-            </Button>
-          </div>
-
-          <Tabs defaultValue="buy" onValueChange={setActiveTab}>
+          <Tabs defaultValue="buy">
             <TabsList className="mb-4">
               <TabsTrigger value="buy">Buy Tokens</TabsTrigger>
               <TabsTrigger value="sell">Sell Tokens</TabsTrigger>
@@ -180,7 +131,14 @@ export default function MarketplacePage() {
                       tokenAmount={trade.carbonTokenAmount}
                       pricePerToken={trade.pricePerToken}
                       requestType={trade.requestType}
-                      onMatch={() => handleMatchTrade(trade._id)}
+                      onMatch={() =>
+                        handleMatchTrade(
+                          trade.requester._id, // ✅ Correctly referencing _id
+                          trade.requester.walletAddress, // ✅ Correctly referencing walletAddress
+                          trade.pricePerToken,
+                          trade.carbonTokenAmount
+                        )
+                      }
                     />
                   ))}
               </div>
@@ -204,15 +162,7 @@ function TradeRequestCard({
   pricePerToken,
   requestType,
   onMatch,
-}: {
-  id: string;
-  orgName: string;
-  orgType: string;
-  tokenAmount: number;
-  pricePerToken: number;
-  requestType: "BUY" | "SELL";
-  onMatch: () => void;
-}) { 
+}) {
   return (
     <Card className="carbon-card overflow-hidden">
       <div
@@ -243,15 +193,17 @@ function TradeRequestCard({
           </div>
           <div className="flex justify-between">
             <span className="text-muted-foreground">Price Per Token:</span>
-            <span className="font-medium">${pricePerToken.toFixed(2)}</span>
+            <span className="font-medium">
+              {pricePerToken.toFixed(8)} SepoliaETH
+            </span>
           </div>
           <div className="flex justify-between">
             <span className="text-muted-foreground">Total Value:</span>
             <span className="font-medium">
-              $
               {(tokenAmount * pricePerToken).toLocaleString(undefined, {
-                maximumFractionDigits: 2,
-              })}
+                maximumFractionDigits: 8,
+              })}{" "}
+              SepoliaETH
             </span>
           </div>
         </div>

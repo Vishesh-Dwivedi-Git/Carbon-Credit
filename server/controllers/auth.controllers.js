@@ -39,16 +39,26 @@ export async function register(req, res, next) {
 
         // Initialize CCT token allocation
         const cctAmounts = {
-            "NGO": 50, "Oil & Gas": 140, "Steel & Cement": 110, 
-            "Renewable Energy": 40, "Recycling & Waste Management": 90, 
+            "NGO": 50,
+            "Oil & Gas": 140,
+            "Steel & Cement": 110,
+            "Renewable Energy": 40,
+            "Recycling & Waste Management": 90,
             "Aviation & Shipping": 80
         };
         const cctAmount = cctAmounts[org_type] || 30; // Default 30 CCT if type not matched
 
+        // Multiply by 10^18 to include 18 decimals in the token contract
+        const cctAmountWithDecimals = BigInt(cctAmount) * BigInt(10 ** 18);
+
         // Create organization entry
         const newOrg = new Org({
-            email, password: hashedPassword, org_name, 
-            org_type, walletAddress, CCtTokens: cctAmount
+            email,
+            password: hashedPassword,
+            org_name,
+            org_type,
+            walletAddress,
+            CCtTokens: cctAmount
         });
 
         await newOrg.save();
@@ -58,12 +68,16 @@ export async function register(req, res, next) {
             if (!tokenContract) {
                 throw new Error("Token contract is not initialized");
             }
-            const tx = await tokenContract.transferFromOwnerOnLogin(walletAddress, cctAmount); //*10**18
+
+            const tx = await tokenContract.transferFromOwnerOnLogin(walletAddress, cctAmountWithDecimals);
             await tx.wait();
-            console.log(`Transferred ${cctAmount} CCT to ${walletAddress}`);
+            console.log(`Transferred ${cctAmount} CCT (with 18 decimals) to ${walletAddress}`);
         } catch (err) {
             console.error("Token transfer failed:", err);
-            return res.status(500).json({ message: "Token transfer failed", error: err.message });
+            return res.status(500).json({
+                message: "Token transfer failed",
+                error: err.message
+            });
         }
 
         // Generate JWT tokens

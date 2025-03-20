@@ -3,6 +3,7 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 export const authenticateToken = (req, res, next) => {
+    console.log("Authenticating token...");
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1];
 

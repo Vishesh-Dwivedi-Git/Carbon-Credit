@@ -15,7 +15,7 @@ import { validateTradeRequest } from '../middlewares/trade.middlewares.js';
 const router = express.Router();
 router.post('/trade-request', authenticateToken, validateTradeRequest, createTradeRequest);
 router.get('/trade-requests', authenticateToken, getTradeRequests);
-router.patch('/match-trade/:requestId', authenticateToken, matchTradeRequest);
+router.post('/match-trade', authenticateToken, matchTradeRequest);
 
 router.post('/submit-co2', authenticateToken, submitCO2Consumption);
 router.patch('/verify-co2/:id', authenticateToken, verifyCO2Consumption);
