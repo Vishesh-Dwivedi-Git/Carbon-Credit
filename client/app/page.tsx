@@ -40,42 +40,16 @@ export default function Home() {
   const scale = useTransform(scrollYProgress, [0, 0.2], [0.9, 1]);
   const heroTextOpacity = useTransform(scrollYProgress, [0, 0.1], [1, 0.8]);
   
-  // Mock data for real-time carbon emissions
-  const [emissionData, setEmissionData] = useState({
-    current: 412.5,
-    change: -0.8,
-    lastUpdated: new Date(),
-    dailyReduction: 24.6,
-    totalReduction: 1254.7,
-    regions: [
-      { name: "North America", value: 415.2, change: -0.5 },
-      { name: "Europe", value: 408.3, change: -1.2 },
-      { name: "Asia", value: 418.7, change: -0.7 },
-      { name: "Oceania", value: 407.9, change: -0.9 },
-    ]
-  });
+  // Admin button scroll behavior
+  const adminButtonY = useTransform(scrollYProgress, 
+    [0, 0.05, 0.1], 
+    [6, 3, 0]
+  );
+  const adminButtonOpacity = useTransform(scrollYProgress,
+    [0, 0.05, 0.1],
+    [1, 1, 0.9]
+  );
   
-  // Simulate real-time updates
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setEmissionData(prev => {
-        const changeValue = Math.random() * 0.4 - 0.2;
-        return {
-          ...prev,
-          current: +(prev.current + changeValue).toFixed(1),
-          change: changeValue < 0 ? changeValue : 0,
-          lastUpdated: new Date(),
-          regions: prev.regions.map(region => ({
-            ...region,
-            value: +(region.value + (Math.random() * 0.3 - 0.15)).toFixed(1),
-            change: Math.random() < 0.7 ? -Math.random() * 0.3 - 0.5 : Math.random() * 0.2
-          }))
-        };
-      });
-    }, 10000);
-    
-    return () => clearInterval(interval);
-  }, []);
 
   return (
     <div className="flex flex-col min-h-screen overflow-x-hidden text-green-100 bg-gradient-to-b from-black to-green-950">
@@ -106,22 +80,18 @@ export default function Home() {
           </div>
         </div>
         
-        {/* Admin Button - Positioned at the top right */}
+        {/* Admin Button - Enhanced with scroll behavior */}
         <motion.div 
-          className="absolute top-4 right-4 z-50"
+          className="absolute top-24 right-6 "
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
+          style={{ 
+            y: adminButtonY,
+            opacity: adminButtonOpacity
+          }}
           transition={{ duration: 0.5, delay: 0.8 }}
         >
-          <Button
-            asChild
-            size="sm"
-            className="font-semibold text-white transition-all duration-300 shadow-lg bg-gradient-to-r from-green-800 to-green-700 hover:from-green-700 hover:to-green-600 shadow-green-800/20"
-          >
-            <Link href="/admin" className="flex items-center gap-2">
-              <Settings className="w-4 h-4" /> Admin
-            </Link>
-          </Button>
+          
         </motion.div>
 
         <div className="container relative z-10">
@@ -141,7 +111,7 @@ export default function Home() {
               >
                 <div className="flex items-center gap-3 mb-6">
                   <div className="w-10 h-10 bg-green-500 rounded-lg "></div>
-                  <h2 className="text-2xl font-bold tracking-tight text-green-400">
+                  <h2 className="text-2xl font-bold tracking-tight text-white">
                     CarbonChain
                   </h2>
                 </div>
@@ -153,7 +123,7 @@ export default function Home() {
                   Carbon Trading
                 </span>
               </h1>
-              <p className="mb-8 text-xl leading-relaxed text-green-200 md:text-2xl">
+              <p className="mb-8 text-xl leading-relaxed text-white md:text-2xl">
                 A blockchain-powered ecosystem connecting industries, regulators,
                 and sustainability goals through transparent carbon credit
                 trading.
@@ -172,7 +142,7 @@ export default function Home() {
                   asChild
                   variant="outline"
                   size="lg"
-                  className="font-semibold text-green-400 transition-all duration-300 border-2 border-green-600 hover:bg-green-900/50"
+                  className="font-semibold text-white transition-all duration-300 border-2 border-green-600 hover:bg-green-900/50"
                 >
                   <Link href="/about">Learn More</Link>
                 </Button>
@@ -187,7 +157,7 @@ export default function Home() {
             >
               <Card className="w-full overflow-hidden border shadow-lg border-green-700/50 bg-gradient-to-br from-black/80 to-green-950/50 shadow-green-900/20 backdrop-blur-sm">
                 <CardHeader className="border-b border-green-800/30 bg-black/60">
-                  <CardTitle className="flex items-center gap-2 text-green-300">
+                  <CardTitle className="flex items-center gap-2 text-white">
                     <div className="p-1.5 rounded-md bg-green-600/20">
                       <Zap className="w-5 h-5 text-green-400" />
                     </div>
@@ -224,118 +194,138 @@ export default function Home() {
         >
           <div className="container grid grid-cols-3 mx-auto">
             <div className="flex flex-col items-center justify-center p-4 border-r border-green-900/50">
-              <span className="text-3xl font-bold text-green-400">250K+</span>
+              <span className="text-3xl font-bold text-white">250K+</span>
               <span className="text-sm text-green-300">
                 Carbon Credits Traded
               </span>
             </div>
             <div className="flex flex-col items-center justify-center p-4 border-r border-green-900/50">
-              <span className="text-3xl font-bold text-green-400">120+</span>
+              <span className="text-3xl font-bold text-white">120+</span>
               <span className="text-sm text-green-300">
                 Industries Connected
               </span>
             </div>
             <div className="flex flex-col items-center justify-center p-4">
-              <span className="text-3xl font-bold text-green-400">30%</span>
+              <span className="text-3xl font-bold text-white">30%</span>
               <span className="text-sm text-green-300">Emission Reduction</span>
             </div>
           </div>
         </motion.div>
+        
       </section>
 
-      {/* Real-time Carbon Emissions Data Section */}
-      <motion.section 
-        className="py-12 bg-black/80 backdrop-blur-md border-y border-green-900/30"
-        initial={{ opacity: 0 }}
-        whileInView={{ opacity: 1 }}
-        transition={{ duration: 0.8 }}
-        viewport={{ once: true }}
-      >
-        <div className="container px-4 mx-auto">
-          <div className="max-w-4xl mx-auto">
-            <div className="mb-8 text-center">
-              <span className="inline-block px-3 py-1 mb-4 text-xs font-semibold tracking-wider text-green-300 uppercase rounded-full bg-green-900/30">
-                Real-time Monitor
-              </span>
-              <h2 className="mb-2 text-2xl font-bold tracking-tight text-green-300">
-                Global Carbon Emissions
-              </h2>
-              <div className="flex items-center justify-center gap-2 text-green-400/70">
-                <Clock className="w-4 h-4" />
-                <span className="text-sm">
-                  Last updated: {emissionData.lastUpdated.toLocaleTimeString()}
-                </span>
-              </div>
-            </div>
-            
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-              <Card className="border bg-black/60 border-green-700/50 backdrop-blur-sm">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-green-300">Current PPM</CardTitle>
-                  <CardDescription className="text-green-400/70">
-                    Global CO₂ concentration in parts per million
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex items-end gap-3">
-                    <span className="text-4xl font-bold text-green-400">
-                      {emissionData.current}
-                    </span>
-                    <div className={`flex items-center mb-1 ${emissionData.change < 0 ? 'text-green-500' : 'text-red-400'}`}>
-                      <span>{emissionData.change < 0 ? '↓' : '↑'}</span>
-                      <span className="text-sm">{Math.abs(emissionData.change).toFixed(1)}</span>
-                    </div>
-                  </div>
-                  <div className="mt-4 space-y-2">
-                    <div className="flex justify-between mb-1 text-sm">
-                      <span className="text-green-300">Safe Level</span>
-                      <span className="text-green-400">350 PPM</span>
-                    </div>
-                    <Progress value={emissionData.current / 5} max={100} className="h-2 bg-green-900/30" />
-                  </div>
-                </CardContent>
-              </Card>
-              
-              <Card className="border bg-black/60 border-green-700/50 backdrop-blur-sm">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-green-300">Reduction Metrics</CardTitle>
-                  <CardDescription className="text-green-400/70">
-                    Impact of carbon credit trading system
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <div className="text-sm text-green-400/70">Daily Reduction</div>
-                      <div className="text-xl font-bold text-green-400">{emissionData.dailyReduction} tons</div>
-                    </div>
-                    <div>
-                      <div className="text-sm text-green-400/70">Total Reduction</div>
-                      <div className="text-xl font-bold text-green-400">{emissionData.totalReduction.toLocaleString()} tons</div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-            
-            <div className="grid grid-cols-2 gap-3 mt-4 md:grid-cols-4">
-              {emissionData.regions.map((region, index) => (
-                <Card key={index} className="border bg-black/60 border-green-700/50 backdrop-blur-sm">
-                  <CardContent className="p-4">
-                    <h4 className="mb-1 text-sm font-medium text-green-300">{region.name}</h4>
-                    <div className="flex items-center gap-2">
-                      <span className="text-lg font-bold text-green-400">{region.value}</span>
-                      <span className={`text-xs ${region.change < 0 ? 'text-green-500' : 'text-red-400'}`}>
-                        {region.change < 0 ? '↓' : '↑'}{Math.abs(region.change).toFixed(1)}
-                      </span>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </div>
+    {/* Real-time Carbon Emissions Data Section with Global CO2 Counter */}
+<motion.section 
+  className="py-12 bg-black/80 backdrop-blur-md border-y border-green-900/30"
+  initial={{ opacity: 0 }}
+  whileInView={{ opacity: 1 }}
+  transition={{ duration: 0.8 }}
+  viewport={{ once: true }}
+>
+  <div className="container px-4 mx-auto">
+    <div className="max-w-4xl mx-auto">
+      <div className="mb-10 text-center">
+        <span className="inline-block px-3 py-1 mb-4 text-xs font-semibold tracking-wider text-green-300 uppercase rounded-full bg-green-900/30">
+          Real-time Monitor
+        </span>
+        <h2 className="mb-2 text-2xl font-bold tracking-tight text-white md:text-3xl">
+          Global Carbon Emissions
+        </h2>
+        <div className="flex items-center justify-center gap-2 text-green-400/70">
+          <Clock className="w-4 h-4" />
+          <span className="text-sm">
+            Live data from global monitoring systems
+          </span>
         </div>
-      </motion.section>
+      </div>
+
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 md:gap-8">
+        {/* Row 1: CO2 Emitted Iframe */}
+        <Card className="flex flex-col border bg-black/60 border-green-700/50 backdrop-blur-sm overflow-hidden shadow-lg shadow-green-900/20">
+          <CardHeader className="pb-2 text-center bg-green-900/10">
+            <CardTitle className="text-lg font-semibold text-white">CO₂ Emitted</CardTitle>
+            <CardDescription className="text-sm text-green-400/70">
+              Tonnes emitted into the atmosphere
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="flex-grow p-4 flex items-center justify-center">
+            <div className="relative w-full max-w-[280px] overflow-hidden rounded-lg border border-green-700/30 bg-black/70">
+              <div className="absolute inset-0 bg-gradient-to-r from-green-900/10 to-transparent"></div>
+              <iframe 
+                title="Tonnes of CO2 emitted into the atmosphere" 
+                src="https://www.theworldcounts.com/embeds/counters/23?background_color=black&color=green&font_family=%22Helvetica+Neue%22%2C+Arial%2C+sans-serif&font_size=16" 
+                style={{ border: "none", width: "100%", height: "100px" }} 
+                className="relative z-10"
+              />
+            </div>
+          </CardContent>
+          <CardFooter className="bg-green-900/10 border-t border-green-800/30 flex justify-center p-3">
+            <span className="text-xs text-green-400/70 flex items-center gap-2">
+              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+              Real-time global tracker
+            </span>
+          </CardFooter>
+        </Card>
+
+        {/* Row 1: CO2 Concentration Iframe */}
+        <Card className="flex flex-col border bg-black/60 border-green-700/50 backdrop-blur-sm overflow-hidden shadow-lg shadow-green-900/20">
+          <CardHeader className="pb-2 text-center bg-green-900/10">
+            <CardTitle className="text-lg font-semibold text-white">CO₂ Concentration</CardTitle>
+            <CardDescription className="text-sm text-green-400/70">
+              Levels in parts per million
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="flex-grow p-4 flex items-center justify-center">
+            <div className="relative w-full max-w-[280px] overflow-hidden rounded-lg border border-green-700/30 bg-black/70">
+              <div className="absolute inset-0 bg-gradient-to-r from-green-900/10 to-transparent"></div>
+              <iframe 
+                title="CO2 Concentration" 
+                src="https://www.theworldcounts.com/embeds/counters/182?background_color=white&color=black&font_family=%22Helvetica+Neue%22%2C+Arial%2C+sans-serif&font_size=14" 
+                style={{ border: "none", width: "100%", height: "100px" }} 
+                className="relative z-10"
+              />
+            </div>
+          </CardContent>
+          <CardFooter className="bg-green-900/10 border-t border-green-800/30 flex justify-center p-3">
+            <span className="text-xs text-green-400/70 flex items-center gap-2">
+              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+              Updates in real-time
+            </span>
+          </CardFooter>
+        </Card>
+
+        {/* Row 2: Cost of Inaction Iframe (Centered) */}
+        <div className="md:col-span-2 flex justify-center">
+          <Card className="flex flex-col border bg-black/60 border-green-700/50 backdrop-blur-sm overflow-hidden shadow-lg shadow-green-900/20 w-full md:w-1/2">
+            <CardHeader className="pb-2 text-center bg-green-900/10">
+              <CardTitle className="text-lg font-semibold text-white">Cost of Inaction</CardTitle>
+              <CardDescription className="text-sm text-green-400/70">
+                Economic impact (US $)
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="flex-grow p-4 flex items-center justify-center">
+              <div className="relative w-full max-w-[280px] overflow-hidden rounded-lg border border-green-700/30 bg-black/70">
+                <div className="absolute inset-0 bg-gradient-to-r from-green-900/10 to-transparent"></div>
+                <iframe 
+                  title="Cost of not acting on climate change (US $)" 
+                  src="https://www.theworldcounts.com/embeds/counters/98?background_color=white&color=black&font_family=%22Helvetica+Neue%22%2C+Arial%2C+sans-serif&font_size=14" 
+                  style={{ border: "none", width: "100%", height: "100px" }} 
+                  className="relative z-10"
+                />
+              </div>
+            </CardContent>
+            <CardFooter className="bg-green-900/10 border-t border-green-800/30 flex justify-center p-3">
+              <span className="text-xs text-green-400/70 flex items-center gap-2">
+                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                Real-time cost estimation
+              </span>
+            </CardFooter>
+          </Card>
+        </div>
+      </div>
+    </div>
+  </div>
+</motion.section>
 
       <section className="py-24 bg-gradient-to-b from-green-950/50 to-black">
         <div className="container px-4 mx-auto">
@@ -343,10 +333,10 @@ export default function Home() {
             <span className="inline-block px-3 py-1 mb-4 text-xs font-semibold tracking-wider text-green-300 uppercase rounded-full bg-green-900/30">
               Our Ecosystem
             </span>
-            <h2 className="mb-6 text-4xl font-bold tracking-tight text-green-300">
+            <h2 className="mb-6 text-4xl font-bold tracking-tight text-white">
               How CarbonChain Works
             </h2>
-            <p className="text-lg text-green-200/70">
+            <p className="text-lg text-white/90">
               A transparent, secure system connecting regulators, industries,
               and the environment.
             </p>
@@ -391,25 +381,25 @@ export default function Home() {
             <div className="grid grid-cols-4 gap-4">
               <div className="text-center">
                 <span className="block text-sm text-green-400">Step 1</span>
-                <span className="block font-medium text-green-200">
+                <span className="block font-medium text-white">
                   Registration
                 </span>
               </div>
               <div className="text-center">
                 <span className="block text-sm text-green-400">Step 2</span>
-                <span className="block font-medium text-green-200">
+                <span className="block font-medium text-white">
                   Token Allocation
                 </span>
               </div>
               <div className="text-center">
                 <span className="block text-sm text-green-400">Step 3</span>
-                <span className="block font-medium text-green-200">
+                <span className="block font-medium text-white">
                   Emissions Tracking
                 </span>
               </div>
               <div className="text-center">
                 <span className="block text-sm text-green-400">Step 4</span>
-                <span className="block font-medium text-green-200">
+                <span className="block font-medium text-white">
                   Token Trading
                 </span>
               </div>
@@ -430,10 +420,10 @@ export default function Home() {
             <span className="inline-block px-3 py-1 mb-4 text-xs font-semibold tracking-wider text-green-300 uppercase rounded-full bg-green-900/30">
               Value Proposition
             </span>
-            <h2 className="mb-6 text-4xl font-bold tracking-tight text-green-300">
+            <h2 className="mb-6 text-4xl font-bold tracking-tight text-white">
               Benefits of CarbonChain
             </h2>
-            <p className="text-lg text-green-200/70">
+            <p className="text-lg text-white/90">
               Creating value for industries, regulators, and our planet.
             </p>
           </div>
@@ -507,10 +497,10 @@ export default function Home() {
               transition={{ duration: 0.6 }}
               viewport={{ once: true }}
             >
-              <h2 className="mb-6 text-4xl font-bold text-green-300">
+              <h2 className="mb-6 text-4xl font-bold text-white">
                 Join the Carbon Revolution
               </h2>
-              <p className="max-w-2xl mx-auto mb-8 text-lg text-green-100">
+              <p className="max-w-2xl mx-auto mb-8 text-lg text-white">
                 Start trading carbon tokens and contribute to a sustainable
                 future for our planet.
               </p>
@@ -528,7 +518,7 @@ export default function Home() {
                   asChild
                   variant="outline"
                   size="lg"
-                  className="font-semibold text-green-400 transition-all duration-300 border-2 border-green-600 hover:bg-green-900/50"
+                  className="font-semibold text-white transition-all duration-300 border-2 border-green-600 hover:bg-green-900/50"
                 >
                   <Link href="/about">Watch Demo</Link>
                 </Button>
@@ -565,7 +555,7 @@ function FeatureCard({
         {number}
       </div>
       <div className="p-3 mb-4 rounded-lg w-fit bg-green-900/30">{icon}</div>
-      <h3 className="mb-3 text-xl font-semibold text-green-300">{title}</h3>
+      <h3 className="mb-3 text-xl font-semibold text-white">{title}</h3>
       <p className="text-green-200/80">{description}</p>
     </motion.div>
   );
@@ -591,9 +581,10 @@ function BenefitCard({
     >
       <div className="p-3 rounded-lg shrink-0 bg-green-800/30">{icon}</div>
       <div>
-        <h3 className="mb-2 text-lg font-semibold text-green-300">{title}</h3>
+        <h3 className="mb-2 text-lg font-semibold text-white">{title}</h3>
         <p className="text-sm text-green-200/80">{description}</p>
       </div>
     </motion.div>
   );
 }
+

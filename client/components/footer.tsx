@@ -1,12 +1,14 @@
-import type React from "react"
-import Link from "next/link"
-import { Facebook, Github, Instagram, Linkedin, Twitter } from "lucide-react"
+import type React from "react";
+import Link from "next/link";
+import { Facebook, Github, Instagram, Linkedin, Twitter, Settings } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 export default function Footer() {
   return (
     <footer className="bg-card border-t border-border">
       <div className="container mx-auto px-4 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-8">
+          {/* Column 1: Branding and Social */}
           <div>
             <Link href="/" className="flex items-center mb-4">
               <span className="text-2xl font-bold text-primary">Carbon</span>
@@ -24,6 +26,7 @@ export default function Footer() {
             </div>
           </div>
 
+          {/* Column 2: Platform */}
           <div>
             <h3 className="text-lg font-semibold mb-4">Platform</h3>
             <ul className="space-y-2">
@@ -34,6 +37,7 @@ export default function Footer() {
             </ul>
           </div>
 
+          {/* Column 3: Company */}
           <div>
             <h3 className="text-lg font-semibold mb-4">Company</h3>
             <ul className="space-y-2">
@@ -44,6 +48,7 @@ export default function Footer() {
             </ul>
           </div>
 
+          {/* Column 4: Legal */}
           <div>
             <h3 className="text-lg font-semibold mb-4">Legal</h3>
             <ul className="space-y-2">
@@ -53,14 +58,30 @@ export default function Footer() {
               <FooterLink href="/compliance">Compliance</FooterLink>
             </ul>
           </div>
+
+          {/* Column 5: Regulators (Government Portal Button) */}
+          <div>
+            <h3 className="text-lg font-semibold mb-4">Regulators</h3>
+            <Button
+              asChild
+              variant="outline"
+              size="sm"
+              className="font-semibold text-white transition-all duration-300 border-2 border-green-600 hover:bg-green-900/50 backdrop-blur-sm bg-black/40"
+            >
+              <Link href="/mint" className="flex items-center gap-2">
+                <Settings className="w-4 h-4" />
+                Government Portal
+              </Link>
+            </Button>
+          </div>
         </div>
 
         <div className="border-t border-border mt-12 pt-6 text-center text-muted-foreground">
-          <p>&copy; {new Date().getFullYear()} CarbonChain. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} CarbonChain. All rights reserved.</p>
         </div>
       </div>
     </footer>
-  )
+  );
 }
 
 function SocialIcon({ href, icon }: { href: string; icon: React.ReactNode }) {
@@ -73,7 +94,7 @@ function SocialIcon({ href, icon }: { href: string; icon: React.ReactNode }) {
     >
       {icon}
     </a>
-  )
+  );
 }
 
 function FooterLink({ href, children }: { href: string; children: React.ReactNode }) {
@@ -83,6 +104,5 @@ function FooterLink({ href, children }: { href: string; children: React.ReactNod
         {children}
       </Link>
     </li>
-  )
+  );
 }
-
