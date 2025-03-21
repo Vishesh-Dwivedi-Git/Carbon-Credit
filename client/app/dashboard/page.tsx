@@ -5,6 +5,8 @@ import { ArrowDown, ArrowUp, BarChart3, DollarSign, Leaf, RefreshCcw, ShoppingCa
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 
 export default function DashboardPage() {
   const [isRefreshing, setIsRefreshing] = useState(false)
@@ -16,10 +18,14 @@ export default function DashboardPage() {
     tokenValue: 0,
     tradeVolume: 0
   })
+  const [predictionMonth, setPredictionMonth] = useState("")
+  const [predictionYear, setPredictionYear] = useState("")
+  const [predictedEmission, setPredictedEmission] = useState(null)
+  const [isPredicting, setIsPredicting] = useState(false)
 
   const fetchDashboardData = async () => {
     try {
-      const token = localStorage.getItem("token") // Retrieve JWT token from localStorage
+      const token = localStorage.getItem("token")
       if (!token) {
         console.error("No token found")
         return
@@ -27,13 +33,13 @@ export default function DashboardPage() {
   
       const headers = {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`, // Attach token
+        Authorization: `Bearer ${token}`,
       }
   
       const [tradeRes, co2Res, userProfileRes] = await Promise.all([
         fetch("http://localhost:5000/api/carbon/trade-requests", { method: "GET", headers, credentials: "include" }),
         fetch("http://localhost:5000/api/carbon/co2-reports", { method: "GET", headers, credentials: "include" }),
-        fetch("http://localhost:5000/api/user/user-profile", { method: "GET", headers, credentials: "include" }), // Fetch user profile
+        fetch("http://localhost:5000/api/user/user-profile", { method: "GET", headers, credentials: "include" }),
       ])
   
       if (tradeRes.ok && co2Res.ok && userProfileRes.ok) {
@@ -45,10 +51,10 @@ export default function DashboardPage() {
         setCo2Reports(co2Data.co2Reports)
   
         setDashboardData({
-          carbonTokens: userProfile.user?.CCtTokens || 0, // Use CCtTokens from user profile
+          carbonTokens: userProfile.user?.CCtTokens || 0,
           co2Emissions: co2Data.co2Reports.reduce((sum, report) => sum + report.emissions, 0),
-          tokenValue: 1, // Fetch dynamically if available
-          tradeVolume: tradeData.tradeRequests.length * 50, // Example
+          tokenValue: 1,
+          tradeVolume: tradeData.tradeRequests.length * 50,
         })
       } else {
         console.error("Failed to fetch data", tradeRes.status, co2Res.status, userProfileRes.status)
@@ -57,9 +63,43 @@ export default function DashboardPage() {
       console.error("Error fetching data:", error)
     }
   }
-  
-  
 
+  const predictEmission = async () => {
+    if (!predictionMonth || !predictionYear) {
+      alert("Please enter both month and year")
+      return
+    }
+
+    setIsPredicting(true)
+    try {
+      const token = localStorage.getItem("token")
+      const response = await fetch("http://127.0.0.1:8080/predict", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          month: predictionMonth,
+          year: parseInt(predictionYear)
+        })
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        setPredictedEmission(data.predicted_emission || data.emission || data) // Adjust based on your API response structure
+      } else {
+        console.error("Failed to fetch prediction", response.status)
+        alert("Failed to get emission prediction")
+      }
+    } catch (error) {
+      console.error("Error predicting emission:", error)
+      alert("Error occurred while predicting emission")
+    } finally {
+      setIsPredicting(false)
+    }
+  }
+  
   useEffect(() => {
     fetchDashboardData()
   }, [])
@@ -85,6 +125,51 @@ export default function DashboardPage() {
         <MetricCard title="Token Value" value={`CCT ${dashboardData.tokenValue}`} description="One CO-2 tonne emmision" icon={<DollarSign className="w-5 h-5 text-yellow-500" />} trend={{ value: "+5.2%", positive: true }} />
         <MetricCard title="Trade Volume" value={dashboardData.tradeVolume} description="Tokens this month" icon={<ShoppingCart className="w-5 h-5 text-blue-500" />} trend={{ value: "-2.1%", positive: false }} />
       </div>
+
+      {/* New Emission Prediction Section */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Get Your Emission Prediction</CardTitle>
+          <CardDescription>Predict your CO2 emissions for a specific month and year</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="month">Month</Label>
+                <Input
+                  id="month"
+                  value={predictionMonth}
+                  onChange={(e) => setPredictionMonth(e.target.value)}
+                  placeholder="Enter month"
+                />
+              </div>
+              <div>
+                <Label htmlFor="year">Year</Label>
+                <Input
+                  id="year"
+                  type="number"
+                  min="2000"
+                  max="2100"
+                  value={predictionYear}
+                  onChange={(e) => setPredictionYear(e.target.value)}
+                  placeholder="Enter year"
+                />
+              </div>
+            </div>
+            <Button onClick={predictEmission} disabled={isPredicting}>
+              {isPredicting ? "Predicting..." : "Get Prediction"}
+            </Button>
+            {predictedEmission !== null && (
+              <div className="p-4 bg-secondary rounded-lg">
+                <p className="text-sm font-medium">Predicted Emission:</p>
+                <p className="text-lg font-bold">{predictedEmission} tons CO2</p>
+                <p className="text-xs text-muted-foreground">For {predictionMonth}/{predictionYear}</p>
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>
@@ -128,6 +213,7 @@ export default function DashboardPage() {
   )
 }
 
+// MetricCard and ActivityItem components remain unchanged
 function MetricCard({ title, value, description, icon, trend }) {
   return (
     <Card>

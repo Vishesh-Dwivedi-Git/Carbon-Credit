@@ -5,17 +5,17 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { BarChart as BarChartIcon, LineChart as LineChartIcon, PieChart as PieChartIcon, AreaChart as AreaChartIcon, Activity, TrendingUp } from "lucide-react"
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell, AreaChart, Area, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, Legend, ScatterChart, Scatter, ZAxis } from "recharts"
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell, AreaChart, Area, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, Legend } from "recharts"
 
 export default function AnalyticsPage() {
   const [timeRange, setTimeRange] = useState("30d")
-  const [emissionsData, setEmissionsData] = useState<{ date: string; ppm: number; baseline: number }[]>([])
-  const [tradeData, setTradeData] = useState<{ month: string; volume: number; transactions: number; avgPrice: number }[]>([])
-  const [tokenData, setTokenData] = useState<{ name: string; value: number }[]>([])
-  const [predictedPrices, setPredictedPrices] = useState<{ month: string; actual: number | null; predicted: number; lower: number; upper: number }[]>([])
-  const [industryAdoption, setIndustryAdoption] = useState<{ industry: string; conventional: number; sustainable: number; target: number }[]>([])
-  const [sustainabilityScores, setSustainabilityScores] = useState<{ category: string; score: number; average: number }[]>([])
-  const [contractActivity, setContractActivity] = useState<{ date: string; executed: number; value: number }[]>([])
+  const [emissionsData, setEmissionsData] = useState([])
+  const [tradeData, setTradeData] = useState([])
+  const [tokenData, setTokenData] = useState([])
+  const [predictedPrices, setPredictedPrices] = useState([])
+  const [industryAdoption, setIndustryAdoption] = useState([])
+  const [sustainabilityScores, setSustainabilityScores] = useState([])
+  const [contractActivity, setContractActivity] = useState([])
   const [loading, setLoading] = useState(true)
 
   // Green color palette
@@ -24,11 +24,82 @@ export default function AnalyticsPage() {
   const COMPLEMENTARY_PALETTE = ['#66bb6a', '#3949ab', '#26a69a', '#7e57c2', '#ffca28', '#ef5350'];
 
   useEffect(() => {
-    // Simulate fetching data based on timeRange
     const fetchAllData = async () => {
+      setLoading(true)
       try {
-        // CO2 emissions data based on NASA data
-        const nasaData = [
+        const token = localStorage.getItem("token") || "fake-token"
+        const headers = {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        }
+
+        // Fetch CO2 emissions data
+        const emissionsResponse = await fetch(`http://api.climate-exchange.com/v1/emissions?range=${timeRange}`, {
+          method: "GET",
+          headers,
+          credentials: "include"
+        })
+        const emissionsJson = await emissionsResponse.json()
+        setEmissionsData(emissionsJson.data)
+
+        // Fetch carbon credit trading data
+        const tradeResponse = await fetch(`http://api.climate-exchange.com/v1/trades?range=${timeRange}`, {
+          method: "GET",
+          headers,
+          credentials: "include"
+        })
+        const tradeJson = await tradeResponse.json()
+        setTradeData(tradeJson.data)
+
+        // Fetch token distribution data
+        const tokenResponse = await fetch(`http://api.climate-exchange.com/v1/tokens/distribution`, {
+          method: "GET",
+          headers,
+          credentials: "include"
+        })
+        const tokenJson = await tokenResponse.json()
+        setTokenData(tokenJson.data)
+
+        // Fetch AI price predictions
+        const predictionResponse = await fetch(`http://api.climate-exchange.com/v1/predictions/prices?range=${timeRange}`, {
+          method: "GET",
+          headers,
+          credentials: "include"
+        })
+        const predictionJson = await predictionResponse.json()
+        setPredictedPrices(predictionJson.data)
+
+        // Fetch industry adoption data
+        const adoptionResponse = await fetch(`http://api.climate-exchange.com/v1/industry/adoption`, {
+          method: "GET",
+          headers,
+          credentials: "include"
+        })
+        const adoptionJson = await adoptionResponse.json()
+        setIndustryAdoption(adoptionJson.data)
+
+        // Fetch sustainability scores
+        const sustainabilityResponse = await fetch(`http://api.climate-exchange.com/v1/sustainability/scores`, {
+          method: "GET",
+          headers,
+          credentials: "include"
+        })
+        const sustainabilityJson = await sustainabilityResponse.json()
+        setSustainabilityScores(sustainabilityJson.data)
+
+        // Fetch smart contract activity
+        const contractResponse = await fetch(`http://api.climate-exchange.com/v1/contracts/activity?range=${timeRange}`, {
+          method: "GET",
+          headers,
+          credentials: "include"
+        })
+        const contractJson = await contractResponse.json()
+        setContractActivity(contractJson.data)
+
+      } catch (error) {
+        console.error("Error fetching climate data:", error)
+        // Fallback to mock data in case of error
+        setEmissionsData([
           { date: 'Jan', ppm: 419.2, baseline: 415.0 },
           { date: 'Feb', ppm: 420.1, baseline: 415.5 },
           { date: 'Mar', ppm: 421.5, baseline: 416.0 },
@@ -39,11 +110,8 @@ export default function AnalyticsPage() {
           { date: 'Aug', ppm: 421.3, baseline: 418.5 },
           { date: 'Sep', ppm: 420.2, baseline: 419.0 },
           { date: 'Oct', ppm: 419.5, baseline: 419.5 },
-        ];
-        setEmissionsData(nasaData);
-        
-        // Carbon credit trading data - now with proper structure for scatter plot
-        const trades = [
+        ])
+        setTradeData([
           { month: 'Jan', volume: 220000, transactions: 156, avgPrice: 32 },
           { month: 'Feb', volume: 310000, transactions: 198, avgPrice: 35 },
           { month: 'Mar', volume: 280000, transactions: 210, avgPrice: 37 },
@@ -54,59 +122,48 @@ export default function AnalyticsPage() {
           { month: 'Aug', volume: 520000, transactions: 425, avgPrice: 49 },
           { month: 'Sep', volume: 550000, transactions: 467, avgPrice: 52 },
           { month: 'Oct', volume: 600000, transactions: 520, avgPrice: 55 },
-        ];
-        setTradeData(trades);
-        
-        // Token distribution data
-        const tokens = [
+        ])
+        setTokenData([
           { name: 'Renewable Energy', value: 35 },
           { name: 'Carbon Capture', value: 25 },
           { name: 'Reforestation', value: 20 },
           { name: 'Sustainable Farming', value: 12 },
           { name: 'Ocean Conservation', value: 8 },
-        ];
-        setTokenData(tokens);
-        
-        // AI Price Prediction data - showing historical vs AI predicted
-        const predictions = [
-          { month: 'Nov', actual: null, predicted: 58, lower: 56, upper: 61 },
-          { month: 'Dec', actual: null, predicted: 62, lower: 59, upper: 65 },
-          { month: 'Jan', actual: null, predicted: 65, lower: 62, upper: 68 },
-          { month: 'Feb', actual: null, predicted: 67, lower: 64, upper: 71 },
-        ];
-        // Combine last 3 actual prices with predictions
-        const priceHistory = trades.slice(-3).map(item => ({
+        ])
+        const trades = [
+          { month: 'Aug', volume: 520000, transactions: 425, avgPrice: 49 },
+          { month: 'Sep', volume: 550000, transactions: 467, avgPrice: 52 },
+          { month: 'Oct', volume: 600000, transactions: 520, avgPrice: 55 },
+        ]
+        const priceHistory = trades.map(item => ({
           month: item.month,
           actual: item.avgPrice,
           predicted: item.avgPrice,
           lower: item.avgPrice,
           upper: item.avgPrice
-        }));
-        setPredictedPrices([...priceHistory, ...predictions]);
-        
-        // Industry adoption rates
-        const adoption = [
+        }))
+        setPredictedPrices([...priceHistory, ...[
+          { month: 'Nov', actual: null, predicted: 58, lower: 56, upper: 61 },
+          { month: 'Dec', actual: null, predicted: 62, lower: 59, upper: 65 },
+          { month: 'Jan', actual: null, predicted: 65, lower: 62, upper: 68 },
+          { month: 'Feb', actual: null, predicted: 67, lower: 64, upper: 71 },
+        ]])
+        setIndustryAdoption([
           { industry: 'Energy', conventional: 65, sustainable: 35, target: 50 },
           { industry: 'Manufacturing', conventional: 72, sustainable: 28, target: 40 },
           { industry: 'Transport', conventional: 78, sustainable: 22, target: 35 },
           { industry: 'Agriculture', conventional: 55, sustainable: 45, target: 60 },
           { industry: 'Construction', conventional: 82, sustainable: 18, target: 30 },
-        ];
-        setIndustryAdoption(adoption);
-        
-        // Sustainability scores radar data
-        const sustainability = [
+        ])
+        setSustainabilityScores([
           { category: 'Emissions Reduction', score: 78, average: 65 },
           { category: 'Renewable Usage', score: 82, average: 60 },
           { category: 'Waste Management', score: 65, average: 58 },
           { category: 'Water Conservation', score: 70, average: 62 },
           { category: 'Sustainable Materials', score: 75, average: 59 },
           { category: 'Biodiversity', score: 68, average: 54 },
-        ];
-        setSustainabilityScores(sustainability);
-        
-        // Smart contract activity
-        const contracts = [
+        ])
+        setContractActivity([
           { date: '1', executed: 42, value: 156000 },
           { date: '5', executed: 38, value: 132000 },
           { date: '10', executed: 56, value: 189000 },
@@ -114,23 +171,18 @@ export default function AnalyticsPage() {
           { date: '20', executed: 63, value: 210000 },
           { date: '25', executed: 58, value: 198000 },
           { date: '30', executed: 72, value: 254000 },
-        ];
-        setContractActivity(contracts);
-        
-        setLoading(false);
-      } catch (error) {
-        console.error("Error fetching climate data:", error);
-        setLoading(false);
+        ])
       }
-    };
+      setLoading(false)
+    }
 
-    fetchAllData();
-  }, [timeRange]);
+    fetchAllData()
+  }, [timeRange])
 
-  // Calculate summary metrics
-  const totalTokens = "18,450";
-  const emissionsReduced = "1,275 tons";
-  const tradeVolume = "$2.25M";
+  // Calculate summary metrics (keeping these static as they were)
+  const totalTokens = "18,450"
+  const emissionsReduced = "1,275 tons"
+  const tradeVolume = "$2.25M"
 
   return (
     <div className="space-y-6">
@@ -247,7 +299,7 @@ export default function AnalyticsPage() {
                       <YAxis yAxisId="left" orientation="left" tickFormatter={(value) => `$${value}`} />
                       <YAxis yAxisId="right" orientation="right" tickFormatter={(value) => `$${value/1000}k`} />
                       <Tooltip 
-                        formatter={(value, name, props) => {
+                        formatter={(value, name) => {
                           if (name === "Credit Price") return [`$${value}`, name];
                           return [`$${value.toLocaleString()}`, name];
                         }}
@@ -485,12 +537,7 @@ export default function AnalyticsPage() {
   )
 }
 
-function MetricCard({
-  title,
-  value,
-  change,
-  trend,
-}: { title: string; value: string; change: string; trend: "up" | "down" }) {
+function MetricCard({ title, value, change, trend }) {
   return (
     <Card className={trend === "up" ? "border-l-4 border-l-green-500" : "border-l-4 border-l-red-500"}>
       <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
