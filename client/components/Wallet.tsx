@@ -1,138 +1,161 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { formatEther, parseEther } from "ethers"
+import toast from "react-hot-toast"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { useToast } from "@/components/ui/use-toast"
 import {
-    Popover,
-    PopoverContent,
-    PopoverTrigger,
-    } from "@/components/ui/popover"
-    import {
-    useAccount,
-    useConnect,
-    useDisconnect,
-    useBalance,
-    useSendTransaction,
-    useWaitForTransactionReceipt
-    } from 'wagmi'
-import { stat } from "fs"
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
+
+import {
+  useAccount,
+  useConnect,
+  useDisconnect,
+  useBalance,
+  useSendTransaction,
+  useWaitForTransactionReceipt,
+} from "wagmi"
 
 import { useAuthorizeStore } from "../Store"
 
-    export default function Wallet() {
-    const { toast } = useToast()
-    const [recipient, setRecipient] = useState<string>("")
-    const [amount, setAmount] = useState<string>("")
-    const [isTransactionPending, setIsTransactionPending] = useState(false)
-    const [isConnectorOpen, setIsConnectorOpen] = useState(false)
+export default function Wallet() {
+  const [recipient, setRecipient] = useState("")
+  const [amount, setAmount] = useState("")
+  const [isTransactionPending, setIsTransactionPending] = useState(false)
+  const [isConnectorOpen, setIsConnectorOpen] = useState(false)
 
-    const { address, isConnected } = useAccount()
-    const { connectors, connect } = useConnect()
-    const { disconnect } = useDisconnect()
-    const { data: balanceData } = useBalance({
-        address: address,
-    })
-    const { sendTransaction, data: transactionData } = useSendTransaction()
-    const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({
-        hash: transactionData,
-    })
+  const { address, isConnected } = useAccount()
+  const { connectors, connect } = useConnect()
+  const { disconnect } = useDisconnect()
+  const { data: balanceData } = useBalance({ address })
+  const { sendTransaction, data: transactionData } = useSendTransaction()
+  const { isSuccess: isConfirmed } = useWaitForTransactionReceipt({
+    hash: transactionData,
+  })
 
-    // Handle ETH transfer
-    const handleTransfer = async () => {
-        if (!recipient || !amount) {
-        toast({
-            title: "Invalid Input",
-            description: "Please provide a valid recipient and amount.",
-            variant: "destructive",
-        })
-        return
-        }
+  const authorizeYourself = useAuthorizeStore((state) => state.authorizeUser)
 
-        try {
-        setIsTransactionPending(true)
-        sendTransaction({
-            to: recipient as `0x${string}`,
-            value: parseEther(amount),
-        })
-        } catch (error) {
-        console.error("Transfer failed:", error)
-        toast({
-            title: "Transfer Failed",
-            description: "Could not complete the transaction.",
-            variant: "destructive",
-        })
-        setIsTransactionPending(false)
-        }
+  const handleTransfer = async () => {
+    if (!recipient || !amount) {
+      toast.error("Please provide both recipient address and amount.")
+      return
     }
 
-    // Watch for transaction confirmation
+    try {
+      setIsTransactionPending(true)
+      toast.dismiss()
+      toast.loading("Sending transaction...")
+
+      sendTransaction({
+        to: recipient as `0x${string}`,
+        value: parseEther(amount),
+      })
+    } catch (error) {
+      console.error("Transfer failed:", error)
+      toast.dismiss()
+      toast.error("Transfer failed.")
+      setIsTransactionPending(false)
+    }
+  }
+
+  useEffect(() => {
     if (isConfirmed && isTransactionPending) {
-        toast({
-        title: "Transfer Successful",
-        description: `Sent ${amount} ETH to ${recipient}`,
-        })
-        setRecipient("")
-        setAmount("")
-        setIsTransactionPending(false)
+      toast.dismiss()
+      toast.success(`Sent ${amount} ETH to ${recipient}`)
+      setRecipient("")
+      setAmount("")
+      setIsTransactionPending(false)
     }
+  }, [isConfirmed, isTransactionPending])
 
-    // Handle connector selection
-    const handleConnectorSelect = (connector: ReturnType<typeof useConnect>['connectors'][number]) => {
-        connect({ connector })
-        setIsConnectorOpen(false)
+  const handleConnectorSelect = (connector: ReturnType<typeof useConnect>["connectors"][number]) => {
+    connect({ connector })
+    setIsConnectorOpen(false)
+  }
+
+  const handleAuthorize = () => {
+    if (!address) {
+      toast.error("Wallet not connected.")
+      return
     }
+    authorizeYourself(address)
+  }
 
-    const authorizeYourself = useAuthorizeStore((state) => state.authorizeUser)
+  return (
+    <div className="space-y-6">
+      <h1 className="text-3xl font-bold">Wallet</h1>
 
-    const handleAuthorize = () => {
-        if (!address) {
-            console.error("Wallet not connected");
-            return;
-        }
-        authorizeYourself(address); // Pass only the wallet address
-    };
+      {isConnected ? (
+        <div className="space-y-4">
+          <p className="text-sm text-muted-foreground">Connected Account: {address}</p>
+          <p className="text-lg font-semibold">
+            Balance: {balanceData ? formatEther(balanceData?.value) : "0"} {balanceData?.symbol}
+          </p>
 
-    return (
-        <div className="space-y-6">
-        <h1 className="text-3xl font-bold">Wallet</h1>
-
-        {isConnected ? (
-            <div className="space-y-4">
-            <p className="text-sm text-muted-foreground">Connected Account: {address}</p>
-            <p className="text-lg font-semibold">Balance: {balanceData ? formatEther(balanceData?.value) : "0"} {balanceData?.symbol}</p>
-            <div className="flex gap-8">
-            <Button onClick={handleAuthorize} variant="outline">Authorise Yourself</Button>
-            <Button onClick={() => disconnect()} variant="outline">Disconnect</Button>
+          <div className="flex items-center gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="recipient">Recipient Address</Label>
+              <Input
+                id="recipient"
+                placeholder="0x..."
+                value={recipient}
+                onChange={(e) => setRecipient(e.target.value)}
+              />
             </div>
+            <div className="space-y-2">
+              <Label htmlFor="amount">Amount (ETH)</Label>
+              <Input
+                id="amount"
+                type="number"
+                placeholder="0.01"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+              />
             </div>
-        ) : (
-            <div className="space-y-4">
-            <p className="text-sm text-muted-foreground">Connect your wallet to continue</p>
-            <Popover open={isConnectorOpen} onOpenChange={setIsConnectorOpen}>
-                <PopoverTrigger asChild>
-                <Button>Connect Wallet</Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-2">
-                <div className="flex flex-col gap-2">
-                    {connectors.map((connector) => (
-                    <Button 
-                        key={connector.uid} 
-                        onClick={() => handleConnectorSelect(connector)}
-                        variant="outline"
-                        className="justify-start"
-                    >
-                        Connect with {connector.name}
-                    </Button>
-                    ))}
-                </div>
-                </PopoverContent>
-            </Popover>
-            </div>
-        )}
+            <Button disabled={isTransactionPending} onClick={handleTransfer}>
+              {isTransactionPending ? "Sending..." : "Send ETH"}
+            </Button>
+          </div>
+
+          <div className="flex gap-4">
+            <Button onClick={handleAuthorize} variant="outline">Authorize Yourself</Button>
+            <Button onClick={() => {
+              disconnect()
+              toast.success("Disconnected from wallet")
+            }} variant="outline">
+              Disconnect
+            </Button>
+          </div>
         </div>
-    )
-    }
+      ) : (
+        <div className="space-y-4">
+          <p className="text-sm text-muted-foreground">Connect your wallet to continue</p>
+          <Popover open={isConnectorOpen} onOpenChange={setIsConnectorOpen}>
+            <PopoverTrigger asChild>
+              <Button>Connect Wallet</Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-2">
+              <div className="flex flex-col gap-2">
+                {connectors.map((connector) => (
+                  <Button
+                    key={connector.uid}
+                    onClick={() => handleConnectorSelect(connector)}
+                    variant="outline"
+                    className="justify-start"
+                  >
+                    Connect with {connector.name}
+                  </Button>
+                ))}
+              </div>
+            </PopoverContent>
+          </Popover>
+        </div>
+      )}
+    </div>
+  )
+}

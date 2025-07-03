@@ -5,6 +5,7 @@ import type { Metadata } from "next";
 import { Providers } from "@/components/Providers";
 import Navbar from "@/components/navbar";
 import Footer from "@/components/footer";
+import { Toaster } from "react-hot-toast"
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -19,6 +20,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="bg-background">
         <Providers>
           <Navbar />
+          <Toaster position="top-right" />
           {children}
           <Footer />
           </Providers>
