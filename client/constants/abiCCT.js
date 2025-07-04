@@ -201,4 +201,4 @@ export const cctAbi = [
 ];
 
 // Replace with your deployed CCt token contract address
-export const cctAddress = "Y0x2A9045e93c81a17D2c3dFcb4260f97895EA20836";
+export const cctAddress = "0x2A9045e93c81a17D2c3dFcb4260f97895EA20836";

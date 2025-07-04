@@ -60,7 +60,7 @@ export default function RegisterPage() {
     setIsLoading(true)
 
     try {
-      const apiUrl = "http://localhost:5000/api/auth/register"
+      const apiUrl = "https://carbon-credit-production.up.railway.app/api/auth/register"
 
       const response = await fetch(apiUrl, {
         method: "POST",

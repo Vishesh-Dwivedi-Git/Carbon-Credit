@@ -8,10 +8,9 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { useToast } from "@/components/ui/use-toast"
+import toast from "react-hot-toast"
 
 export default function SettingsPage() {
-  const { toast } = useToast()
   const [isLoading, setIsLoading] = useState(false)
 
   const handleSave = () => {
@@ -19,10 +18,7 @@ export default function SettingsPage() {
     // Simulate API call
     setTimeout(() => {
       setIsLoading(false)
-      toast({
-        title: "Settings updated",
-        description: "Your settings have been successfully saved.",
-      })
+      toast.success("Your settings have been successfully saved.")
     }, 1500)
   }
 
@@ -127,4 +123,3 @@ export default function SettingsPage() {
     </div>
   )
 }
-

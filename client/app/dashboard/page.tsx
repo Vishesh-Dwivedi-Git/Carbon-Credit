@@ -1,17 +1,79 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, ReactNode } from "react"
 import { ArrowDown, ArrowUp, BarChart3, DollarSign, Leaf, RefreshCcw, ShoppingCart } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import toast from "react-hot-toast"
+
+// MetricCard component definition
+type MetricCardProps = {
+  title: string
+  value: string | number
+  description: string
+  icon: ReactNode
+  trend: { value: string, positive: boolean }
+}
+
+function MetricCard({ title, value, description, icon, trend }: MetricCardProps) {
+  return (
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+        <CardTitle className="text-sm font-medium">{title}</CardTitle>
+        {icon}
+      </CardHeader>
+      <CardContent>
+        <div className="text-2xl font-bold">{value}</div>
+        <p className="text-xs text-muted-foreground">{description}</p>
+        <div className={`flex items-center mt-2 text-xs ${trend.positive ? "text-green-600" : "text-red-600"}`}>
+          {trend.positive ? <ArrowUp className="w-3 h-3 mr-1" /> : <ArrowDown className="w-3 h-3 mr-1" />}
+          {trend.value}
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
+
+// ActivityItem component definition
+type ActivityItemProps = {
+  title: string
+  description: string
+  timestamp: string
+  status: string
+}
+
+function ActivityItem({ title, description, timestamp, status }: ActivityItemProps) {
+  return (
+    <div className="flex items-center justify-between p-3 border rounded-lg">
+      <div>
+        <div className="font-semibold">{title}</div>
+        <div className="text-sm text-muted-foreground">{description}</div>
+        <div className="text-xs text-gray-400">{timestamp}</div>
+      </div>
+      <div className="text-xs font-medium px-2 py-1 rounded bg-gray-100 dark:bg-gray-800">{status}</div>
+    </div>
+  )
+}
+
+type Co2Report = {
+  emissions: number
+  createdAt: string
+  verificationStatus?: string
+}
 
 export default function DashboardPage() {
   const [isRefreshing, setIsRefreshing] = useState(false)
-  const [tradeRequests, setTradeRequests] = useState([])
-  const [co2Reports, setCo2Reports] = useState([])
+  type TradeRequest = {
+    requestType: string
+    requester: { org_name: string }
+    createdAt: string
+    status: string
+  }
+  const [tradeRequests, setTradeRequests] = useState<TradeRequest[]>([])
+  const [co2Reports, setCo2Reports] = useState<Co2Report[]>([])
   const [dashboardData, setDashboardData] = useState({
     carbonTokens: 0,
     co2Emissions: 0,
@@ -20,86 +82,92 @@ export default function DashboardPage() {
   })
   const [predictionMonth, setPredictionMonth] = useState("")
   const [predictionYear, setPredictionYear] = useState("")
-  const [predictedEmission, setPredictedEmission] = useState(null)
+  const [predictedEmission, setPredictedEmission] = useState<number | null>(null)
   const [isPredicting, setIsPredicting] = useState(false)
 
   const fetchDashboardData = async () => {
+    const loading = toast.loading("Fetching dashboard data...")
+
     try {
       const token = localStorage.getItem("token")
       if (!token) {
-        console.error("No token found")
-        return
+        toast.dismiss(loading)
+        return toast.error("No token found. Please log in again.")
       }
-  
+
       const headers = {
         "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
       }
-  
+
       const [tradeRes, co2Res, userProfileRes] = await Promise.all([
-        fetch("http://localhost:5000/api/carbon/trade-requests", { method: "GET", headers, credentials: "include" }),
-        fetch("http://localhost:5000/api/carbon/co2-reports", { method: "GET", headers, credentials: "include" }),
-        fetch("http://localhost:5000/api/user/user-profile", { method: "GET", headers, credentials: "include" }),
+        fetch("https://carbon-credit-production.up.railway.app/api/carbon/trade-requests", { method: "GET", headers, credentials: "include" }),
+        fetch("https://carbon-credit-production.up.railway.app/api/carbon/co2-reports", { method: "GET", headers, credentials: "include" }),
+        fetch("https://carbon-credit-production.up.railway.app/api/user/user-profile", { method: "GET", headers, credentials: "include" }),
       ])
-  
+
       if (tradeRes.ok && co2Res.ok && userProfileRes.ok) {
         const tradeData = await tradeRes.json()
         const co2Data = await co2Res.json()
         const userProfile = await userProfileRes.json()
-  
+
         setTradeRequests(tradeData.tradeRequests)
         setCo2Reports(co2Data.co2Reports)
-  
+
         setDashboardData({
           carbonTokens: userProfile.user?.CCtTokens || 0,
-          co2Emissions: co2Data.co2Reports.reduce((sum, report) => sum + report.emissions, 0),
+          co2Emissions: co2Data.co2Reports.reduce((sum: number, report: Co2Report) => sum + report.emissions, 0),
           tokenValue: 1,
           tradeVolume: tradeData.tradeRequests.length * 50,
         })
+
+        toast.success("Dashboard data loaded successfully", { id: loading })
       } else {
-        console.error("Failed to fetch data", tradeRes.status, co2Res.status, userProfileRes.status)
+        toast.error("Failed to fetch some dashboard data", { id: loading })
       }
     } catch (error) {
-      console.error("Error fetching data:", error)
+      toast.error("Error loading dashboard", { id: loading })
+      console.error("Error:", error)
     }
   }
 
   const predictEmission = async () => {
     if (!predictionMonth || !predictionYear) {
-      alert("Please enter both month and year")
+      toast.error("Please enter both month and year")
       return
     }
 
-    setIsPredicting(true)
-    try {
-      const token = localStorage.getItem("token")
-      const response = await fetch("http://127.0.0.1:8080/predict", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          month: predictionMonth,
-          year: parseInt(predictionYear)
-        })
-      })
-
-      if (response.ok) {
-        const data = await response.json()
-        setPredictedEmission(data.predicted_emission || data.emission || data) // Adjust based on your API response structure
-      } else {
-        console.error("Failed to fetch prediction", response.status)
-        alert("Failed to get emission prediction")
-      }
-    } catch (error) {
-      console.error("Error predicting emission:", error)
-      alert("Error occurred while predicting emission")
-    } finally {
-      setIsPredicting(false)
+    const token = localStorage.getItem("token")
+    if (!token) {
+      return toast.error("You must be logged in to use prediction")
     }
+
+    const promise = fetch("http://127.0.0.1:8080/predict", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        month: predictionMonth,
+        year: parseInt(predictionYear)
+      })
+    }).then(res => {
+      if (!res.ok) throw new Error("Prediction failed")
+      return res.json()
+    })
+
+    toast.promise(promise, {
+      loading: "Predicting emissions...",
+      success: (data) => {
+        const predicted = data.predicted_emission || data.emission || data
+        setPredictedEmission(predicted)
+        return `Predicted emission: ${predicted} tons CO2`
+      },
+      error: "Failed to get emission prediction"
+    })
   }
-  
+
   useEffect(() => {
     fetchDashboardData()
   }, [])
@@ -122,11 +190,10 @@ export default function DashboardPage() {
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         <MetricCard title="Carbon Tokens" value={dashboardData.carbonTokens} description="Available tokens" icon={<Leaf className="w-5 h-5 text-primary" />} trend={{ value: "+12%", positive: true }} />
         <MetricCard title="CO2 Emissions" value={dashboardData.co2Emissions} description="Tons this month" icon={<BarChart3 className="w-5 h-5 text-destructive" />} trend={{ value: "-8%", positive: true }} />
-        <MetricCard title="Token Value" value={`CCT ${dashboardData.tokenValue}`} description="One CO-2 tonne emmision" icon={<DollarSign className="w-5 h-5 text-yellow-500" />} trend={{ value: "+5.2%", positive: true }} />
+        <MetricCard title="Token Value" value={`CCT ${dashboardData.tokenValue}`} description="One CO-2 tonne emission" icon={<DollarSign className="w-5 h-5 text-yellow-500" />} trend={{ value: "+5.2%", positive: true }} />
         <MetricCard title="Trade Volume" value={dashboardData.tradeVolume} description="Tokens this month" icon={<ShoppingCart className="w-5 h-5 text-blue-500" />} trend={{ value: "-2.1%", positive: false }} />
       </div>
 
-      {/* New Emission Prediction Section */}
       <Card>
         <CardHeader>
           <CardTitle>Get Your Emission Prediction</CardTitle>
@@ -137,24 +204,11 @@ export default function DashboardPage() {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="month">Month</Label>
-                <Input
-                  id="month"
-                  value={predictionMonth}
-                  onChange={(e) => setPredictionMonth(e.target.value)}
-                  placeholder="Enter month"
-                />
+                <Input id="month" value={predictionMonth} onChange={(e) => setPredictionMonth(e.target.value)} placeholder="Enter month" />
               </div>
               <div>
                 <Label htmlFor="year">Year</Label>
-                <Input
-                  id="year"
-                  type="number"
-                  min="2000"
-                  max="2100"
-                  value={predictionYear}
-                  onChange={(e) => setPredictionYear(e.target.value)}
-                  placeholder="Enter year"
-                />
+                <Input id="year" type="number" min="2000" max="2100" value={predictionYear} onChange={(e) => setPredictionYear(e.target.value)} placeholder="Enter year" />
               </div>
             </div>
             <Button onClick={predictEmission} disabled={isPredicting}>
@@ -199,7 +253,7 @@ export default function DashboardPage() {
               <div className="space-y-4">
                 {co2Reports.length > 0 ? (
                   co2Reports.map((report, index) => (
-                    <ActivityItem key={index} title="CO2 Report" description={`Emissions: ${report.emissions} tons`} timestamp={new Date(report.createdAt).toLocaleString()} status={report.verificationStatus} />
+                    <ActivityItem key={index} title="CO2 Report" description={`Emissions: ${report.emissions} tons`} timestamp={new Date(report.createdAt).toLocaleString()} status={report.verificationStatus ?? "unknown"} />
                   ))
                 ) : (
                   <p>No CO2 reports found</p>
@@ -209,47 +263,6 @@ export default function DashboardPage() {
           </Tabs>
         </CardContent>
       </Card>
-    </div>
-  )
-}
-
-// MetricCard and ActivityItem components remain unchanged
-function MetricCard({ title, value, description, icon, trend }) {
-  return (
-    <Card>
-      <CardContent className="p-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm font-medium text-muted-foreground">{title}</p>
-            <h3 className="mt-1 text-2xl font-bold">{value}</h3>
-          </div>
-          <div className="p-2 rounded-full bg-secondary">{icon}</div>
-        </div>
-        <div className="flex items-center mt-4">
-          <div className={`flex items-center text-sm ${trend.positive ? "text-green-500" : "text-red-500"}`}>
-            {trend.positive ? <ArrowUp className="w-4 h-4 mr-1" /> : <ArrowDown className="w-4 h-4 mr-1" />}
-            {trend.value}
-          </div>
-          <span className="ml-2 text-sm text-muted-foreground">{description}</span>
-        </div>
-      </CardContent>
-    </Card>
-  )
-}
-
-function ActivityItem({ title, description, timestamp, status }) {
-  return (
-    <div className="flex items-start p-4 border rounded-lg border-border">
-      <div className="flex-1">
-        <h4 className="font-medium">{title}</h4>
-        <p className="mt-1 text-sm text-muted-foreground">{description}</p>
-        <p className="mt-2 text-xs text-muted-foreground">{timestamp}</p>
-      </div>
-      <div>
-        <span className={`text-xs px-2 py-1 rounded-full ${status === "pending" ? "bg-yellow-500/20 text-yellow-500" : status === "completed" ? "bg-green-500/20 text-green-500" : "bg-red-500/20 text-red-500"}`}>
-          {status.charAt(0).toUpperCase() + status.slice(1)}
-        </span>
-      </div>
     </div>
   )
 }

@@ -28,7 +28,7 @@ export default function IncentivesPage() {
     abi: cctAbi,
     functionName: "balanceOf",
     args: [address],
-    enabled: !!address, // Only fetch if address is available
+    // Only fetch if address is available (handled by args: [address])
   });
 
   const formattedBalance = cctBalance ? formatUnits(BigInt(cctBalance.toString()), 18) : "0"; // Assuming 18 decimals
@@ -36,10 +36,10 @@ export default function IncentivesPage() {
   const fetchData = async () => {
     try {
       const [incentivesRes, userIncentivesRes, leaderboardRes, impactRes] = await Promise.all([
-        fetch("http://localhost:5000/api/incentives/list", { credentials: "include" }),
-        fetch("http://localhost:5000/api/incentives/user", { credentials: "include" }),
-        fetch("http://localhost:5000/api/incentives/leaderboard", { credentials: "include" }),
-        fetch("http://localhost:5000/api/incentives/impact/global", { credentials: "include" }),
+        fetch("https://carbon-credit-production.up.railway.app/api/incentives/list", { credentials: "include" }),
+        fetch("https://carbon-credit-production.up.railway.app/api/incentives/user", { credentials: "include" }),
+        fetch("https://carbon-credit-production.up.railway.app/api/incentives/leaderboard", { credentials: "include" }),
+        fetch("https://carbon-credit-production.up.railway.app/api/incentives/impact/global", { credentials: "include" }),
       ]);
 
       if (incentivesRes.ok) setIncentives(await incentivesRes.json().then(data => data.incentives));
@@ -75,7 +75,7 @@ export default function IncentivesPage() {
     fetchData().finally(() => setIsRefreshing(false));
   };
 
-  const calculateStars = (points) => Math.min(5, Math.floor(points / 200));
+  const calculateStars = (points: number) => Math.min(5, Math.floor(points / 200));
 
   return (
     <div className="space-y-6">
@@ -185,7 +185,14 @@ export default function IncentivesPage() {
 }
 
 // StatCard Component
-function StatCard({ title, value, description, icon }) {
+type StatCardProps = {
+  title: string;
+  value: React.ReactNode;
+  description: string;
+  icon: React.ReactNode;
+};
+
+function StatCard({ title, value, description, icon }: StatCardProps) {
   return (
     <Card>
       <CardContent className="p-6">
@@ -203,7 +210,14 @@ function StatCard({ title, value, description, icon }) {
 }
 
 // IncentiveList Component
-function IncentiveList({ incentives, isGovernmentUser, refreshData, calculateStars }) {
+type IncentiveListProps = {
+  incentives: any[];
+  isGovernmentUser: boolean;
+  refreshData: () => void;
+  calculateStars: (points: number) => number;
+};
+
+function IncentiveList({ incentives, isGovernmentUser, refreshData}: IncentiveListProps) {
   const [newIncentive, setNewIncentive] = useState({ 
     title: "", 
     description: "", 
@@ -214,7 +228,7 @@ function IncentiveList({ incentives, isGovernmentUser, refreshData, calculateSta
   });
 
   const handleCreate = async () => {
-    const res = await fetch("http://localhost:5000/api/incentives/create", {
+    const res = await fetch("https://carbon-credit-production.up.railway.app/api/incentives/create", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ 
@@ -229,9 +243,9 @@ function IncentiveList({ incentives, isGovernmentUser, refreshData, calculateSta
     }
   };
 
-  const handleDelete = async (id) => {
+  const handleDelete = async (id: unknown) => {
     if (confirm("Are you sure you want to delete this incentive?")) {
-      const res = await fetch(`http://localhost:5000/api/incentives/delete/${id}`, {
+      const res = await fetch(`https://carbon-credit-production.up.railway.app/api/incentives/delete/${id}`, {
         method: "DELETE",
         credentials: "include",
       });
@@ -335,7 +349,13 @@ function IncentiveList({ incentives, isGovernmentUser, refreshData, calculateSta
 }
 
 // UserIncentives Component
-function UserIncentives({ userIncentives, stats, calculateStars }) {
+type UserIncentivesProps = {
+  userIncentives: any[];
+  stats: { totalPoints: number; totalCarbonOffset: number; totalRecords?: number; level: number };
+  calculateStars: (points: number) => number;
+};
+
+function UserIncentives({ userIncentives, stats, calculateStars }: UserIncentivesProps) {
   const nextLevelPoints = stats.level * 1000;
   const progressPercent = ((stats.totalPoints % 1000) / 1000) * 100;
   
@@ -403,12 +423,16 @@ function UserIncentives({ userIncentives, stats, calculateStars }) {
 }
 
 // RedeemForm Component
-function RedeemForm({ refreshData }) {
+type RedeemFormProps = {
+  refreshData: () => void;
+};
+
+function RedeemForm({ refreshData }: RedeemFormProps) {
   const [rewardType, setRewardType] = useState("");
   const [points, setPoints] = useState(0);
 
   const handleRedeem = async () => {
-    const res = await fetch("http://localhost:5000/api/incentives/redeem", {
+    const res = await fetch("https://carbon-credit-production.up.railway.app/api/incentives/redeem", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ rewardType, pointsUsed: points }),
@@ -483,7 +507,12 @@ function RedeemForm({ refreshData }) {
 }
 
 // Leaderboard Component
-function Leaderboard({ leaderboard, calculateStars }) {
+type LeaderboardProps = {
+  leaderboard: any[];
+  calculateStars: (points: number) => number;
+};
+
+function Leaderboard({ leaderboard, calculateStars }: LeaderboardProps) {
   return (
     <div className="space-y-4">
       {leaderboard.length > 0 ? (
@@ -533,7 +562,15 @@ function Leaderboard({ leaderboard, calculateStars }) {
 }
 
 // GlobalImpact Component
-function GlobalImpact({ impact }) {
+type GlobalImpactProps = {
+  impact: {
+    totalPoints: number;
+    totalCarbonOffset: number;
+    totalActions: number;
+  };
+};
+
+function GlobalImpact({ impact }: GlobalImpactProps) {
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-1 gap-6 mb-8 md:grid-cols-3">
@@ -620,7 +657,14 @@ function GlobalImpact({ impact }) {
 }
 
 // StarRating Component
-function StarRating({ rating, maxRating = 5, size = 'md', className = '' }) {
+type StarRatingProps = {
+  rating: number;
+  maxRating?: number;
+  size?: 'sm' | 'md' | 'lg' | 'xl';
+  className?: string;
+};
+
+function StarRating({ rating, maxRating = 5, size = 'md', className = '' }: StarRatingProps) {
   const starSizes = {
     sm: "w-4 h-4",
     md: "w-5 h-5",
@@ -641,7 +685,13 @@ function StarRating({ rating, maxRating = 5, size = 'md', className = '' }) {
 }
 
 // AchievementNotification Component (Using CSS Animation)
-function AchievementNotification({ show, achievement, onClose }) {
+type AchievementNotificationProps = {
+  show: boolean;
+  achievement: string;
+  onClose: () => void;
+};
+
+function AchievementNotification({ show, achievement, onClose }: AchievementNotificationProps) {
   return (
     <div
       className={`fixed z-50 flex items-start max-w-xs p-4 rounded-lg shadow-lg top-4 right-4 bg-primary text-primary-foreground transition-all duration-300 ease-in-out ${

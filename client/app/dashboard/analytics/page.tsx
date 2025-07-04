@@ -9,13 +9,21 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 
 export default function AnalyticsPage() {
   const [timeRange, setTimeRange] = useState("30d")
-  const [emissionsData, setEmissionsData] = useState([])
-  const [tradeData, setTradeData] = useState([])
-  const [tokenData, setTokenData] = useState([])
-  const [predictedPrices, setPredictedPrices] = useState([])
-  const [industryAdoption, setIndustryAdoption] = useState([])
-  const [sustainabilityScores, setSustainabilityScores] = useState([])
-  const [contractActivity, setContractActivity] = useState([])
+  type EmissionsDatum = { date: string; ppm: number; baseline: number }
+  type TradeDatum = { month: string; volume: number; transactions: number; avgPrice: number }
+  type TokenDatum = { name: string; value: number }
+  type PredictedPrice = { month: string; actual: number | null; predicted: number; lower: number; upper: number }
+  type IndustryAdoptionDatum = { industry: string; conventional: number; sustainable: number; target: number }
+  type SustainabilityScore = { category: string; score: number; average: number }
+  type ContractActivityDatum = { date: string; executed: number; value: number }
+
+  const [emissionsData, setEmissionsData] = useState<EmissionsDatum[]>([])
+  const [tradeData, setTradeData] = useState<TradeDatum[]>([])
+  const [tokenData, setTokenData] = useState<TokenDatum[]>([])
+  const [predictedPrices, setPredictedPrices] = useState<PredictedPrice[]>([])
+  const [industryAdoption, setIndustryAdoption] = useState<IndustryAdoptionDatum[]>([])
+  const [sustainabilityScores, setSustainabilityScores] = useState<SustainabilityScore[]>([])
+  const [contractActivity, setContractActivity] = useState<ContractActivityDatum[]>([])
   const [loading, setLoading] = useState(true)
 
   // Green color palette
@@ -537,7 +545,14 @@ export default function AnalyticsPage() {
   )
 }
 
-function MetricCard({ title, value, change, trend }) {
+type MetricCardProps = {
+  title: string;
+  value: string;
+  change: string;
+  trend: "up" | "down";
+};
+
+function MetricCard({ title, value, change, trend }: MetricCardProps) {
   return (
     <Card className={trend === "up" ? "border-l-4 border-l-green-500" : "border-l-4 border-l-red-500"}>
       <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">

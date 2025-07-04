@@ -1,18 +1,29 @@
 "use client"
+
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
-import { useToast } from "@/components/ui/use-toast"
 import { Check, Clock, X } from "lucide-react"
+import toast from "react-hot-toast"
 
 export default function TradeRequestsPage() {
-  const { toast } = useToast()
+  const handleCancelRequest = async (id: string) => {
+    const cancelPromise = new Promise<void>((resolve, reject) => {
+      setTimeout(() => {
+        const success = Math.random() > 0.2 // simulate 80% success rate
+        if (success) {
+          resolve()
+        } else {
+          reject(new Error("Server failed to cancel the request."))
+        }
+      }, 1200)
+    })
 
-  const handleCancelRequest = (id: string) => {
-    toast({
-      title: "Trade request cancelled",
-      description: `Trade request #${id} has been cancelled.`,
+    toast.promise(cancelPromise, {
+      loading: `Cancelling trade request #${id}...`,
+      success: `Trade request #${id} has been cancelled.`,
+      error: (err) => err.message || "Failed to cancel request",
     })
   }
 
@@ -214,4 +225,3 @@ function MyTradeRequestCard({
     </Card>
   )
 }
-

@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
@@ -11,15 +10,11 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useToast } from "@/components/ui/use-toast"
 
-
 export default function LoginPage() {
   const router = useRouter()
   const { toast } = useToast()
   const [isLoading, setIsLoading] = useState(false)
-  const [formData, setFormData] = useState({
-    email: "",
-    password: "",
-  })
+  const [formData, setFormData] = useState({ email: "", password: "" })
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
@@ -28,8 +23,7 @@ export default function LoginPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    
-    // Form validation
+
     if (!formData.email || !formData.password) {
       toast({
         title: "Missing fields",
@@ -38,63 +32,55 @@ export default function LoginPage() {
       })
       return
     }
-    
+
     setIsLoading(true)
-  
+
     try {
-      const apiUrl = "http://localhost:5000/api/auth/login"
-      
+      const apiUrl = "https://carbon-credit-production.up.railway.app/api/auth/login"
+
       const response = await fetch(apiUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        credentials: "include", // Include cookies for session management
-        body: JSON.stringify({
-          email: formData.email,
-          password: formData.password,
-        }),
+        credentials: "include",
+        body: JSON.stringify(formData),
       })
-  
+
       const data = await response.json()
-      
+
       if (response.ok) {
-        // Ensure tokens exist in response
-        if (data.tokens && data.tokens.accessToken) {
+        if (data.tokens?.accessToken) {
           localStorage.setItem("token", data.tokens.accessToken)
+          toast({
+            title: "Login successful",
+            description: "Welcome back to CarbonChain!",
+          })
+          router.push("/dashboard")
         } else {
           throw new Error("Token not received from server")
         }
-  
-        toast({
-          title: "Login successful!",
-          description: "Welcome back to CarbonChain.",
-        })
-        router.push("/dashboard")
       } else {
         throw new Error(data.message || "Invalid email or password")
       }
     } catch (error) {
-      console.error("Login error:", error)
       toast({
         title: "Login failed",
-        description: error instanceof Error ? error.message : "Unable to connect to server",
+        description: error instanceof Error ? error.message : "Something went wrong",
         variant: "destructive",
       })
     } finally {
       setIsLoading(false)
     }
   }
-  
-  
 
   return (
     <div className="min-h-screen flex flex-col">
-
       <div className="flex-1 flex items-center justify-center py-12 px-4 dashboard-gradient">
         <Card className="w-full max-w-md carbon-card">
           <CardHeader className="space-y-1">
             <CardTitle className="text-2xl font-bold">Login to CarbonChain</CardTitle>
             <CardDescription>Enter your credentials to access your account</CardDescription>
           </CardHeader>
+
           <form onSubmit={handleSubmit}>
             <CardContent className="space-y-4">
               <div className="space-y-2">
@@ -106,8 +92,8 @@ export default function LoginPage() {
                   placeholder="Enter your email"
                   value={formData.email}
                   onChange={handleChange}
+                  disabled={isLoading}
                   required
-                  aria-required="true"
                 />
               </div>
 
@@ -125,21 +111,16 @@ export default function LoginPage() {
                   placeholder="Enter your password"
                   value={formData.password}
                   onChange={handleChange}
+                  disabled={isLoading}
                   required
-                  aria-required="true"
                 />
               </div>
             </CardContent>
 
             <CardFooter className="flex flex-col">
-              <Button 
-                type="submit" 
-                className="w-full" 
-                disabled={isLoading}
-              >
+              <Button type="submit" className="w-full" disabled={isLoading}>
                 {isLoading ? "Logging in..." : "Login"}
               </Button>
-
               <div className="mt-4 text-center text-sm">
                 Don&apos;t have an account?{" "}
                 <Link href="/register" className="text-primary hover:underline">
@@ -150,7 +131,6 @@ export default function LoginPage() {
           </form>
         </Card>
       </div>
-
     </div>
   )
 }

@@ -28,7 +28,19 @@ const CCT_TOKEN_ABI = [
 
 
 
-async function createOrder({ requestType, carbonTokenAmount, pricePerToken, writeContractAsync }) {
+type CreateOrderParams = {
+  requestType: string;
+  carbonTokenAmount: number;
+  pricePerToken: number;
+  writeContractAsync: (args: {
+    address: `0x${string}`;
+    abi: any;
+    functionName: string;
+    args: any[];
+  }) => Promise<any>;
+};
+
+async function createOrder({ requestType, carbonTokenAmount, pricePerToken, writeContractAsync }: CreateOrderParams) {
   try {
     console.log("🔥 Starting createOrder function...");
     console.log("📌 CCT_TOKEN_ADDRESS:", CCT_TOKEN_ADDRESS);
@@ -49,7 +61,7 @@ async function createOrder({ requestType, carbonTokenAmount, pricePerToken, writ
       console.log(`🛠 Approving ${carbonTokenAmount} CCT tokens for contract: ${TRADING_CONTRACT_ADDRESS}`);
 
     await writeContractAsync({
-        address: CCT_TOKEN_ADDRESS,
+        address: CCT_TOKEN_ADDRESS as `0x${string}`,
         abi: CCT_TOKEN_ABI,
         functionName: "approve",
         args: [TRADING_CONTRACT_ADDRESS, amountInWei],
@@ -59,7 +71,7 @@ async function createOrder({ requestType, carbonTokenAmount, pricePerToken, writ
     }
 
     console.log("📡 Sending trade request to backend...");
-    const resp = await axios.post("http://localhost:5000/api/carbon/trade-request", {
+    const resp = await axios.post("https://carbon-credit-production.up.railway.app/api/carbon/trade-request", {
       requestType,
       carbonTokenAmount,
       pricePerToken,
@@ -71,9 +83,10 @@ async function createOrder({ requestType, carbonTokenAmount, pricePerToken, writ
   } catch (error) {
     console.error("🚨 Trade request failed! Error details:", error);
 
-    if (error.response) {
+    if (typeof error === "object" && error !== null && "response" in error) {
+      // @ts-expect-error: error.response is expected from axios errors
       console.error("🛑 Backend Response:", error.response.data);
-    } else if (error.request) {
+    } else if (typeof error === "object" && error !== null && "request" in error) {
       console.error("🛑 No response received from backend!");
     }
 

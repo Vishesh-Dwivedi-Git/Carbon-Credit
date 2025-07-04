@@ -14,13 +14,11 @@ import {
   Activity,
   TrendingUp,
   Award,
-  Settings,
+  
   Clock,
 } from "lucide-react";
-import Navbar from "@/components/navbar";
-import Footer from "@/components/footer";
 import { motion, useScroll, useTransform } from "framer-motion";
-import { useRef, useState, useEffect } from "react";
+import { useRef} from "react";
 import {
   Card,
   CardContent,
@@ -29,8 +27,6 @@ import {
   CardTitle,
   CardFooter,
 } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Progress } from "@/components/ui/progress";
 const Wallet = dynamic(() => import("@/components/Wallet"), { ssr: false });
 
 export default function Home() {

@@ -1,4 +1,5 @@
-"use client";
+"use client"
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -9,34 +10,39 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useToast } from "@/components/ui/use-toast";
-import { Filter } from "lucide-react";
 import {
-  useTradeRequestStore,
   useExecuteTradeStore,
 } from "../../../Store";
 import SellTokenForm from "@/components/SellTokenForm";
 import { usePublicClient, useSendTransaction } from "wagmi";
+import toast from "react-hot-toast";
 
 export default function MarketplacePage() {
   const { sendTransactionAsync } = useSendTransaction();
   const { executeTrade } = useExecuteTradeStore();
-  const publicClient = usePublicClient(); 
-  const { toast } = useToast();
-  const [tradeRequests_b, setTradeRequests] = useState([]);
+  const publicClient = usePublicClient();
+
+  interface TradeRequest {
+    _id: string;
+    requester: {
+      _id: string;
+      org_name: string;
+      org_type: string;
+      walletAddress: string;
+    };
+    carbonTokenAmount: number;
+    pricePerToken: number;
+    requestType: string;
+  }
+
+  const [tradeRequests_b, setTradeRequests] = useState<TradeRequest[]>([]);
 
   const fetchDashboardData = async () => {
     try {
       const token = localStorage.getItem("token");
       if (!token) {
-        toast({
-          title: "Authentication Error",
-          description: "No token found. Please log in again.",
-          variant: "destructive",
-        });
+        toast.error("No token found. Please log in again.");
         return;
       }
 
@@ -45,7 +51,7 @@ export default function MarketplacePage() {
         Authorization: `Bearer ${token}`,
       };
 
-      const tradeRes = await fetch("http://localhost:5000/api/carbon/trade-requests", {
+      const tradeRes = await fetch("https://carbon-credit-production.up.railway.app/api/carbon/trade-requests", {
         method: "GET",
         headers,
         credentials: "include",
@@ -55,18 +61,10 @@ export default function MarketplacePage() {
         const tradeData = await tradeRes.json();
         setTradeRequests(tradeData.tradeRequests);
       } else {
-        toast({
-          title: "Data Fetch Failed",
-          description: "Failed to fetch trade requests from the server.",
-          variant: "destructive",
-        });
+        toast.error("Failed to fetch trade requests from the server.");
       }
     } catch (error) {
-      toast({
-        title: "Unexpected Error",
-        description: "An error occurred while fetching data.",
-        variant: "destructive",
-      });
+      toast.error("An error occurred while fetching data.");
     }
   };
 
@@ -74,13 +72,14 @@ export default function MarketplacePage() {
     fetchDashboardData();
   }, []);
 
-  const handleMatchTrade = async (tradeId, sellerAddress, pricePerToken, carbonTokenAmount) => {
-    if (isNaN(pricePerToken) || isNaN(carbonTokenAmount)) {
-      toast({
-        title: "Invalid Input",
-        description: "Price per token or carbon token amount is invalid.",
-        variant: "destructive",
-      });
+  const handleMatchTrade = async (
+    tradeId: string,
+    sellerAddress: string,
+    pricePerToken: number | string,
+    carbonTokenAmount: number | string
+  ): Promise<void> => {
+    if (isNaN(Number(pricePerToken)) || isNaN(Number(carbonTokenAmount))) {
+      toast.error("Price per token or carbon token amount is invalid.");
       return;
     }
 
@@ -88,23 +87,16 @@ export default function MarketplacePage() {
       await executeTrade({
         sellerId: tradeId,
         sellerAddress,
-        pricePerToken: parseFloat(pricePerToken),
-        carbonTokenAmount: parseFloat(carbonTokenAmount),
+        pricePerToken: parseFloat(pricePerToken as string),
+        carbonTokenAmount: parseFloat(carbonTokenAmount as string),
         sendTransactionAsync,
-        publicClient
+        publicClient,
       });
 
-      toast({
-        title: "Trade Matched",
-        description: `Successfully matched trade request #${tradeId}.`,
-      });
- fetchDashboardData();
-    } catch (error) {
-      toast({
-        title: "Trade Match Failed",
-        description: error.message || "An error occurred.",
-        variant: "destructive",
-      });
+      toast.success(`Successfully matched trade request #${tradeId}`);
+      fetchDashboardData();
+    } catch (error: any) {
+      toast.error(error.message || "An error occurred.");
     }
   };
 
@@ -133,8 +125,8 @@ export default function MarketplacePage() {
                       requestType={trade.requestType}
                       onMatch={() =>
                         handleMatchTrade(
-                          trade.requester._id, // ✅ Correctly referencing _id
-                          trade.requester.walletAddress, // ✅ Correctly referencing walletAddress
+                          trade.requester._id,
+                          trade.requester.walletAddress,
                           trade.pricePerToken,
                           trade.carbonTokenAmount
                         )
@@ -154,6 +146,16 @@ export default function MarketplacePage() {
   );
 }
 
+interface TradeRequestCardProps {
+  id: string;
+  orgName: string;
+  orgType: string;
+  tokenAmount: number;
+  pricePerToken: number;
+  requestType: string;
+  onMatch: () => void;
+}
+
 function TradeRequestCard({
   id,
   orgName,
@@ -162,7 +164,7 @@ function TradeRequestCard({
   pricePerToken,
   requestType,
   onMatch,
-}) {
+}: TradeRequestCardProps) {
   return (
     <Card className="carbon-card overflow-hidden">
       <div

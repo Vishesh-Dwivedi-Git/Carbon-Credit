@@ -7,19 +7,15 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Textarea } from "@/components/ui/textarea"
-import { useToast } from "@/components/ui/use-toast"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { FileText, Plus, Upload } from "lucide-react"
+import toast from "react-hot-toast"
 
 export default function CO2ReportsPage() {
-  const { toast } = useToast()
   const [activeTab, setActiveTab] = useState("submit")
 
   const handleSubmitReport = () => {
-    toast({
-      title: "CO2 report submitted",
-      description: "Your CO2 consumption report has been submitted for verification.",
-    })
+    toast.success("Your CO2 consumption report has been submitted for verification.")
   }
 
   return (
@@ -68,18 +64,12 @@ export default function CO2ReportsPage() {
                         <SelectValue placeholder="Select month" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="1">January</SelectItem>
-                        <SelectItem value="2">February</SelectItem>
-                        <SelectItem value="3">March</SelectItem>
-                        <SelectItem value="4">April</SelectItem>
-                        <SelectItem value="5">May</SelectItem>
-                        <SelectItem value="6">June</SelectItem>
-                        <SelectItem value="7">July</SelectItem>
-                        <SelectItem value="8">August</SelectItem>
-                        <SelectItem value="9">September</SelectItem>
-                        <SelectItem value="10">October</SelectItem>
-                        <SelectItem value="11">November</SelectItem>
-                        <SelectItem value="12">December</SelectItem>
+                        {[
+                          "January", "February", "March", "April", "May", "June",
+                          "July", "August", "September", "October", "November", "December"
+                        ].map((month, i) => (
+                          <SelectItem key={i} value={`${i + 1}`}>{month}</SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </div>
@@ -202,8 +192,8 @@ function ReportCard({
               status === "PENDING"
                 ? "bg-yellow-500/20 text-yellow-500"
                 : status === "VERIFIED"
-                  ? "bg-green-500/20 text-green-500"
-                  : "bg-red-500/20 text-red-500"
+                ? "bg-green-500/20 text-green-500"
+                : "bg-red-500/20 text-red-500"
             }`}
           >
             {status}
@@ -247,4 +237,3 @@ function ReportCard({
     </Card>
   )
 }
-
